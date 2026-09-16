@@ -1,0 +1,36 @@
+name: Build PixInsight Update Repository
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - pixinsight-update-repository
+    paths:
+      - AstroTemps_AutoProcessing_Tool.js
+      - tools/build_update.py
+      - .github/workflows/build-pixinsight-update.yml
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build PixInsight package and XRI
+        run: python3 tools/build_update.py
+
+      - name: Commit generated update repository files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add updates/updates.xri updates/AstroTemps-v1.2.0.zip
+          if git diff --cached --quiet; then
+            echo "No generated changes to commit."
+          else
+            git commit -m "Build PixInsight update repository for v1.2.0"
+            git push
+          fi
