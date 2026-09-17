@@ -1,0 +1,33 @@
+name: Write Redux Helper Map
+
+on:
+  push:
+    branches:
+      - redux-implementation
+    paths:
+      - tools/write_redux_helper_map.py
+      - .github/workflows/write-redux-helper-map.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  map:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Generate helper map
+        run: python3 tools/write_redux_helper_map.py
+      - name: Commit helper map
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/redux_helper_map.txt
+          if git diff --cached --quiet; then
+            echo "No helper-map changes."
+          else
+            git commit -m "chore: record temporary Redux helper map"
+            git push
+          fi
