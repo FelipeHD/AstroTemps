@@ -11,6 +11,8 @@
  * =====================================================================
  */
 
+#engine v8
+
 #define ASTROTEMPS_LIBRARY_MODE
 #include "AstroTemps_AutoProcessing_Tool.js"
 

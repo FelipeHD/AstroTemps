@@ -66,7 +66,9 @@
  * See the integrated engine header for SetiAstro attribution and CC BY-NC 4.0 notice.
  * =====================================================================
  */
+#ifndef ASTROTEMPS_LIBRARY_MODE
 #engine v8
+#endif
 
 #ifndef ASTROTEMPS_LIBRARY_MODE
 #feature-id Utilities > AstroTemps AutoProcessing Tool
