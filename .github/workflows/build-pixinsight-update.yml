@@ -7,6 +7,7 @@ on:
       - pixinsight-update-repository
     paths:
       - AstroTemps_AutoProcessing_Tool.js
+      - VERSION
       - tools/build_update.py
       - .github/workflows/build-pixinsight-update.yml
 
@@ -24,11 +25,11 @@ jobs:
         id: source
         shell: bash
         run: |
-          if [ -f AstroTemps_AutoProcessing_Tool.js ]; then
+          if [ -f AstroTemps_AutoProcessing_Tool.js ] && [ -f VERSION ]; then
             echo "present=true" >> "$GITHUB_OUTPUT"
           else
             echo "present=false" >> "$GITHUB_OUTPUT"
-            echo "Stable release source is not present. Nothing will be published."
+            echo "Stable release source or VERSION file is missing. Nothing will be published."
           fi
 
       - name: Build PixInsight package and XRI
@@ -37,13 +38,15 @@ jobs:
 
       - name: Commit generated update repository files
         if: steps.source.outputs.present == 'true'
+        shell: bash
         run: |
+          VERSION="$(tr -d '\r\n' < VERSION)"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add updates/updates.xri updates/AstroTemps-v1.2.0.zip
+          git add -A updates/
           if git diff --cached --quiet; then
             echo "No generated changes to commit."
           else
-            git commit -m "Build PixInsight update repository for v1.2.0"
+            git commit -m "Build PixInsight update repository for v${VERSION}"
             git push
           fi
