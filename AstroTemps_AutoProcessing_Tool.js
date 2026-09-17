@@ -1,6 +1,6 @@
 /*
  * =====================================================================
- * AstroTemps AutoProcessing Tool
+ * AstroTemps AutoProcessing Tool 
  * Version 1.2.0 - Windows
  * PixInsight / PJSR
  *
