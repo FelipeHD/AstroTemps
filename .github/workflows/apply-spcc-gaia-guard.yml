@@ -6,6 +6,7 @@ on:
       - development
     paths:
       - tools/apply_spcc_gaia_guard.py
+      - tools/test_spcc_gaia_guard.py
       - .github/workflows/apply-spcc-gaia-guard.yml
   workflow_dispatch:
 
