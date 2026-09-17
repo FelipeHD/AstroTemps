@@ -8,9 +8,23 @@ import re
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "AstroTemps_AutoProcessing_Tool.js"
 VERSION_FILE = ROOT / "VERSION"
 UPDATES = ROOT / "updates"
+
+SOURCES = [
+    (
+        ROOT / "AstroTemps_AutoProcessing_Tool.js",
+        "src/scripts/AstroTemps/AstroTemps_AutoProcessing_Tool.js",
+        r'\bvar\s+VERSION\s*=\s*["\']([^"\']+)["\']\s*;',
+        "VERSION",
+    ),
+    (
+        ROOT / "AstroTemps_Redux.js",
+        "src/scripts/AstroTemps/AstroTemps_Redux.js",
+        r'\bvar\s+REDUX_VERSION\s*=\s*["\']([^"\']+)["\']\s*;',
+        "REDUX_VERSION",
+    ),
+]
 
 
 def read_version() -> str:
@@ -22,16 +36,24 @@ def read_version() -> str:
     return version
 
 
-def validate_script_version(version: str) -> None:
-    text = SOURCE.read_text(encoding="utf-8", errors="strict")
-    match = re.search(r'\bvar\s+VERSION\s*=\s*["\']([^"\']+)["\']\s*;', text)
-    if not match:
-        raise SystemExit("Could not find 'var VERSION = \"X.Y.Z\";' in the script.")
-    script_version = match.group(1)
-    if script_version != version:
-        raise SystemExit(
-            f"Version mismatch: VERSION file is {version}, but script declares {script_version}."
-        )
+def validate_sources(version: str) -> None:
+    for source, _arcname, pattern, variable_name in SOURCES:
+        if not source.exists():
+            raise SystemExit(f"Missing source file: {source}")
+
+        text = source.read_text(encoding="utf-8", errors="strict")
+        match = re.search(pattern, text)
+        if not match:
+            raise SystemExit(
+                f"Could not find 'var {variable_name} = \"X.Y.Z\";' in {source.name}."
+            )
+
+        script_version = match.group(1)
+        if script_version != version:
+            raise SystemExit(
+                f"Version mismatch: VERSION file is {version}, but {source.name} "
+                f"declares {script_version}."
+            )
 
 
 def release_date_for(version: str) -> str:
@@ -45,6 +67,15 @@ def release_date_for(version: str) -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%d")
 
 
+def zip_info_for(arcname: str, release_date: str) -> zipfile.ZipInfo:
+    info = zipfile.ZipInfo(arcname)
+    dt = datetime.strptime(release_date, "%Y%m%d")
+    info.date_time = (dt.year, dt.month, dt.day, 12, 0, 0)
+    info.compress_type = zipfile.ZIP_DEFLATED
+    info.external_attr = 0o100644 << 16
+    return info
+
+
 def build_zip(version: str, release_date: str) -> Path:
     UPDATES.mkdir(parents=True, exist_ok=True)
     zip_name = f"AstroTemps-v{version}.zip"
@@ -54,15 +85,10 @@ def build_zip(version: str, release_date: str) -> Path:
         if stale.name != zip_name:
             stale.unlink()
 
-    arcname = "src/scripts/AstroTemps/AstroTemps_AutoProcessing_Tool.js"
-    info = zipfile.ZipInfo(arcname)
-    dt = datetime.strptime(release_date, "%Y%m%d")
-    info.date_time = (dt.year, dt.month, dt.day, 12, 0, 0)
-    info.compress_type = zipfile.ZIP_DEFLATED
-    info.external_attr = 0o100644 << 16
-    data = SOURCE.read_bytes()
     with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
-        zf.writestr(info, data)
+        for source, arcname, _pattern, _variable_name in SOURCES:
+            zf.writestr(zip_info_for(arcname, release_date), source.read_bytes())
+
     return out
 
 
@@ -77,7 +103,7 @@ def build_xri(zip_path: Path, version: str, release_date: str) -> Path:
       <package fileName="{zip_path.name}" sha1="{sha1}" type="script" releaseDate="{release_date}">
          <title>AstroTemps AutoProcessing Tool v{version}</title>
          <description>
-            <p>Automated and configurable astrophotography processing workflow for PixInsight.</p>
+            <p>Automated and configurable astrophotography processing workflow for PixInsight, including AstroTemps Redux.</p>
          </description>
       </package>
    </platform>
@@ -89,11 +115,8 @@ def build_xri(zip_path: Path, version: str, release_date: str) -> Path:
 
 
 if __name__ == "__main__":
-    if not SOURCE.exists():
-        raise SystemExit(f"Missing source file: {SOURCE}")
-
     version = read_version()
-    validate_script_version(version)
+    validate_sources(version)
     release_date = release_date_for(version)
     zip_path = build_zip(version, release_date)
     xri_path = build_xri(zip_path, version, release_date)
