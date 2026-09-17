@@ -1,0 +1,21 @@
+name: Test Redux Implementation
+
+on:
+  push:
+    branches:
+      - redux-implementation
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run Redux static regression test
+        run: python3 tools/test_redux_static.py
+      - name: Run SPCC Gaia regression test
+        run: python3 tools/test_spcc_gaia_guard.py
