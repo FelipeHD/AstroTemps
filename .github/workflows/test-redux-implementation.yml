@@ -19,3 +19,5 @@ jobs:
         run: python3 tools/test_redux_static.py
       - name: Run SPCC Gaia regression test
         run: python3 tools/test_spcc_gaia_guard.py
+      - name: Run Redux package regression test
+        run: python3 tools/test_redux_package.py
