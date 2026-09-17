@@ -1,0 +1,76 @@
+name: Apply Redux V8 Dialog Fix
+
+on:
+  push:
+    branches:
+      - development
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: development
+
+      - name: Replace legacy Dialog construction
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path("AstroTemps_Redux.js")
+          text = path.read_text(encoding="utf-8")
+
+          old_head = '''function TAPR_SPCCDialog( presets )
+          {
+             this.__base__ = Dialog;
+             this.__base__();
+          '''
+          new_head = '''var TAPR_SPCCDialog = class extends Dialog
+          {
+             constructor( presets )
+             {
+                super();
+          '''
+
+          old_tail = '''   this.adjustToContents();
+             this.setFixedWidth( Math.max( this.width, 520 ) );
+          }
+          TAPR_SPCCDialog.prototype = new Dialog;'''
+          new_tail = '''   this.adjustToContents();
+             this.setFixedWidth( Math.max( this.width, 520 ) );
+             }
+          };'''
+
+          if old_head not in text:
+              if "var TAPR_SPCCDialog = class extends Dialog" in text:
+                  print("Dialog constructor already migrated.")
+                  raise SystemExit(0)
+              raise SystemExit("Legacy TAPR_SPCCDialog constructor pattern not found")
+
+          if old_tail not in text:
+              raise SystemExit("Legacy TAPR_SPCCDialog prototype pattern not found")
+
+          text = text.replace(old_head, new_head, 1)
+          text = text.replace(old_tail, new_tail, 1)
+          path.write_text(text, encoding="utf-8", newline="\n")
+
+      - name: Run Redux V8 Dialog regression
+        run: python3 tools/test_redux_dialog_v8.py
+
+      - name: Commit fix if needed
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add AstroTemps_Redux.js
+          if git diff --cached --quiet; then
+            echo "No Redux Dialog changes needed."
+          else
+            git commit -m "fix: construct Redux SPCC dialog with V8 class syntax"
+            git push origin development
+          fi
