@@ -83,4 +83,30 @@ for setting in (
 require("TAPR_restoreStageCheckpoint" in REDUX and "fallbackFn" in REDUX,
         "Redux fallback must restore checkpoint before fallback")
 
+for marker in (
+    "function TAPR_imageWindowIds",
+    "function TAPR_findNewStarsView",
+    "function TAPR_cleanupNewWindows",
+    "function TAPR_runStarRemoval",
+    "StarXTerminator - Star Removal",
+    "StarNet2 - Star Removal",
+    "_Redux_stars",
+):
+    require(marker in REDUX, f"Missing Redux star-removal contract: {marker}")
+
+for setting in (
+    "s.starOutputStars = true",
+    "s.starUnscreen = false",
+    "s.starOverlap = 0.20",
+    "s.starnetMask = true",
+    "s.starnetUnscreen = true",
+    "s.starnetLinear = true",
+    "s.starnetUpsample = false",
+    "s.starnetHighlightProtection = true",
+):
+    require(setting in REDUX, f"Missing Redux star-removal setting: {setting}")
+
+require("executeStarX" in REDUX and "executeStarNet2" in REDUX,
+        "Redux star-removal engines are not wired")
+
 print("PASS - Redux static contract")
