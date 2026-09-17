@@ -29,4 +29,22 @@ require("Parameters.isViewTarget" in REDUX, "Process Icon/view-target path missi
 require("_Redux" in REDUX, "Redux working-copy suffix missing")
 require("#engine v8" not in REDUX, "Redux must not declare a second #engine v8")
 
-print("PASS - Redux library mode and entrypoint contract")
+for marker in (
+    "function TAPR_buildSPCCPresets",
+    "function TAPR_showSPCCDialog",
+    "function TAPR_runSolverAndSPCC",
+    "Capture Filter",
+    "Skip SPCC",
+    "TAP_loadSPCCFilterNames",
+    "reduxInstance",
+    "newInstance",
+):
+    require(marker in REDUX, f"Missing Redux SPCC marker: {marker}")
+
+require("Parameters.clear()" in REDUX, "Redux Process Icon must clear transient parameters")
+require("spccRedFilter" in REDUX and "spccGreenFilter" in REDUX and "spccBlueFilter" in REDUX,
+        "Redux preset must map to SPCC R/G/B filters")
+require("if ( choice.skip )" in REDUX, "Redux SPCC skip branch missing")
+require("executeSPCC" in REDUX, "Redux does not invoke proven SPCC implementation")
+
+print("PASS - Redux static contract")
