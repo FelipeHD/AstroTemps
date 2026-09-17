@@ -9,11 +9,14 @@ checks = {
     "Gaia/SP failure classifier": "function TAP_isGaiaDR3SPFailureText" in text,
     "SPCC failure handler": "function TAP_handleSPCCFailure" in text,
     "Gaia DR3/SP guidance": "Gaia DR3/SP" in text and "Open the <b>Gaia</b> process" in text,
-    "Skip option": "StdButton_Ignore" in text,
+    "Skip option": "StdButton_Ignore" in text and "return false;" in text,
     "Abort option": "StdButton_Abort" in text,
-    "SPCC returns completion state": "return true;" in text and "return false;" in text,
+    "Native SPCC failure is caught": "catch ( eSPCC )" in text and "spccErrorText = TAP_errorText( eSPCC );" in text,
+    "Unclassified false result gets guarded guidance": "spccErrorText.length == 0 || TAP_isGaiaDR3SPFailureText( spccErrorText )" in text,
+    "SPCC success is explicit": "console.noteln( \"SPCC completed through native V8 binding.\" );\n   return true;" in text,
     "Dispatcher respects skipped SPCC": "var spccCompleted = executeSPCC( workView, s );" in text,
-    "Skipped SPCC does not snapshot": "if ( spccCompleted )" in text and "createProcessSnapshotIfEnabled( workView, s, \"SPCC\" );" in text,
+    "SPCC snapshot only on success": "if ( spccCompleted )" in text and "createProcessSnapshotIfEnabled( workView, s, \"SPCC\" );" in text,
+    "Skip is logged": "SPCC stage skipped. Continuing with the remaining selected stages." in text,
 }
 
 failed = [name for name, ok in checks.items() if not ok]
