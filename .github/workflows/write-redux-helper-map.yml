@@ -6,6 +6,7 @@ on:
       - redux-implementation
     paths:
       - tools/write_redux_helper_map.py
+      - tools/write_redux_source_slices.py
       - .github/workflows/write-redux-helper-map.yml
   workflow_dispatch:
 
@@ -18,16 +19,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Generate helper map
-        run: python3 tools/write_redux_helper_map.py
-      - name: Commit helper map
+      - name: Generate helper map and source slices
+        run: |
+          python3 tools/write_redux_helper_map.py
+          python3 tools/write_redux_source_slices.py
+      - name: Commit temporary maps
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add tools/redux_helper_map.txt
+          git add tools/redux_helper_map.txt tools/redux_source_slices.txt
           if git diff --cached --quiet; then
-            echo "No helper-map changes."
+            echo "No temporary map changes."
           else
-            git commit -m "chore: record temporary Redux helper map"
+            git commit -m "chore: record temporary Redux source slices"
             git push
           fi
