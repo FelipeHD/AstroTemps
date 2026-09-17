@@ -20,10 +20,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check stable release source
+        id: source
+        shell: bash
+        run: |
+          if [ -f AstroTemps_AutoProcessing_Tool.js ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "Stable release source is not present. Nothing will be published."
+          fi
+
       - name: Build PixInsight package and XRI
+        if: steps.source.outputs.present == 'true'
         run: python3 tools/build_update.py
 
       - name: Commit generated update repository files
+        if: steps.source.outputs.present == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
