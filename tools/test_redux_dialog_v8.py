@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
 
+# Regression for PixInsight V8: native Dialog must be subclassed with class/super().
 ROOT = Path(__file__).resolve().parents[1]
 REDUX = (ROOT / "AstroTemps_Redux.js").read_text(encoding="utf-8")
 
