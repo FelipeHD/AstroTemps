@@ -225,10 +225,11 @@ function TAPR_buildSPCCPresets( filterNames )
    return presets;
 }
 
-function TAPR_SPCCDialog( presets )
+var TAPR_SPCCDialog = class extends Dialog
 {
-   this.__base__ = Dialog;
-   this.__base__();
+   constructor( presets )
+   {
+      super();
 
    var self = this;
    this.windowTitle = "AstroTemps Redux - SPCC";
@@ -301,8 +302,8 @@ function TAPR_SPCCDialog( presets )
 
    this.adjustToContents();
    this.setFixedWidth( Math.max( this.width, 520 ) );
-}
-TAPR_SPCCDialog.prototype = new Dialog;
+   }
+};
 
 function TAPR_showSPCCDialog( presets )
 {
