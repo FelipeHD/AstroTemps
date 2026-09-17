@@ -335,6 +335,194 @@ function TAPR_runSolverAndSPCC( workView, choice )
    return completed === true;
 }
 
+function TAPR_createStageCheckpoint( view, stageName )
+{
+   if ( view == null || view.isNull )
+      throw new Error( "Redux cannot checkpoint an invalid view for " + stageName + "." );
+
+   var src = view.image;
+   var id = uniqueImageId( "AstroTemps_Redux_checkpoint" );
+   var w = new ImageWindow(
+      src.width,
+      src.height,
+      src.numberOfChannels,
+      src.bitsPerSample,
+      src.isReal,
+      src.isColor,
+      id
+   );
+
+   var ok = false;
+   try
+   {
+      w.mainView.beginProcess( UndoFlag_NoSwapFile );
+      w.mainView.image.assign( src );
+      w.mainView.endProcess();
+      TAPR_copyKeywords( view.window, w );
+      try { copyViewProperties( view, w.mainView ); } catch ( eProps ) {}
+      ok = true;
+      return w.mainView;
+   }
+   finally
+   {
+      if ( !ok )
+         try { w.forceClose(); } catch ( eClose ) {}
+   }
+}
+
+function TAPR_restoreStageCheckpoint( view, checkpointView )
+{
+   if ( view == null || view.isNull || checkpointView == null || checkpointView.isNull )
+      throw new Error( "Redux checkpoint restore received an invalid view." );
+
+   if ( view.image.width != checkpointView.image.width ||
+        view.image.height != checkpointView.image.height ||
+        view.image.numberOfChannels != checkpointView.image.numberOfChannels )
+      throw new Error( "Redux checkpoint geometry does not match the working image." );
+
+   view.beginProcess( UndoFlag_NoSwapFile );
+   try
+   {
+      view.image.assign( checkpointView.image );
+   }
+   finally
+   {
+      view.endProcess();
+   }
+
+   try { view.window.keywords = checkpointView.window.keywords; } catch ( eKeywords ) {}
+   try { copyViewProperties( checkpointView, view ); } catch ( eProps ) {}
+   view.window.bringToFront();
+   CoreApplication.processEvents();
+}
+
+function TAPR_closeStageCheckpoint( checkpointView )
+{
+   if ( checkpointView == null || checkpointView.isNull )
+      return;
+   try
+   {
+      if ( checkpointView.window != null && !checkpointView.window.isNull )
+         checkpointView.window.forceClose();
+   }
+   catch ( e ) {}
+}
+
+function TAPR_runWithFallback( stageName, view, primaryName, primaryFn, fallbackName, fallbackFn )
+{
+   console.writeln( "<end><cbr><br>------------------------------------------------------------" );
+   console.noteln( stageName );
+   console.writeln( "Primary engine : " + primaryName );
+   console.writeln( "Fallback engine: " + fallbackName );
+
+   var checkpoint = TAPR_createStageCheckpoint( view, stageName );
+   var primaryError = "";
+   try
+   {
+      primaryFn();
+      TAPR_closeStageCheckpoint( checkpoint );
+      console.noteln( "Primary completed successfully: " + primaryName );
+      return;
+   }
+   catch ( ePrimary )
+   {
+      primaryError = TAP_errorText( ePrimary );
+      console.warningln( "Primary failed: " + primaryError );
+   }
+
+   TAPR_restoreStageCheckpoint( view, checkpoint );
+   console.warningln( "Clean pre-stage state restored. Trying fallback: " + fallbackName );
+
+   try
+   {
+      fallbackFn();
+      TAPR_closeStageCheckpoint( checkpoint );
+      console.noteln( "Fallback completed successfully: " + fallbackName );
+      return;
+   }
+   catch ( eFallback )
+   {
+      var fallbackError = TAP_errorText( eFallback );
+      console.criticalln( "Fallback failed: " + fallbackError );
+      try { TAPR_restoreStageCheckpoint( view, checkpoint ); } catch ( eRestore ) {}
+      TAPR_closeStageCheckpoint( checkpoint );
+      throw new Error(
+         stageName + " failed with both processing engines.\n\n" +
+         "Primary (" + primaryName + "): " + primaryError + "\n\n" +
+         "Fallback (" + fallbackName + "): " + fallbackError
+      );
+   }
+}
+
+function TAPR_runOpticalCorrection( view )
+{
+   var s = defaultSettings();
+   s.blurCorrectOverlap = 0.20;
+   s.ccOptUseGPU = true;
+   s.ccOptTempStretch = false;
+   s.ccOptTargetMedian = 0.25;
+   s.ccOptChunkSize = 256;
+   s.ccOptOverlap = 64;
+
+   TAPR_runWithFallback(
+      "[1] Optical Correction",
+      view,
+      "BlurXTerminator - Correct Only",
+      function() { executeBlurXCorrectOnly( view, s ); },
+      "Cosmic Clarity SASpro - Correct Only",
+      function() { executeSASproCorrectOnly( view, s ); }
+   );
+}
+
+function TAPR_runGradientRemoval( view )
+{
+   var s = defaultSettings();
+   s.adbeDivideFirst = false;
+   s.graxpertSmoothing = 0.000;
+
+   TAPR_runWithFallback(
+      "[2] Gradient Removal",
+      view,
+      "SetiAstro Automatic DBE - Subtract Only",
+      function() { executeSetiAstroAutoDBE( view, false ); },
+      "GraXpert - Subtract Only",
+      function() { executeGraXpertAutoDBE( view, false, s.graxpertSmoothing ); }
+   );
+}
+
+function TAPR_runSharpening( view )
+{
+   var s = defaultSettings();
+   s.sharpenStars = 0.40;
+   s.sharpenAdjustStarHalos = 0.00;
+   s.sharpenNonstellarDiameter = 0.0;
+   s.sharpenAutoNonstellarPSF = true;
+   s.sharpenNonstellar = 0.60;
+   s.sharpenLunarPlanetary = false;
+   s.sharpenOverlap = 0.20;
+
+   s.ccSharpMode = "Both";
+   s.ccSharpStellarAmount = 0.90;
+   s.ccSharpNonStellarStrength = 3.00;
+   s.ccSharpNonStellarAmount = 0.50;
+   s.ccSharpSeparateChannels = false;
+   s.ccSharpAutoPSF = false;
+   s.ccSharpUseGPU = true;
+   s.ccSharpTempStretch = false;
+   s.ccSharpTargetMedian = 0.25;
+   s.ccSharpChunkSize = 256;
+   s.ccSharpOverlap = 64;
+
+   TAPR_runWithFallback(
+      "[4] Sharpening",
+      view,
+      "BlurXTerminator - Sharpening",
+      function() { executeBlurXSharpen( view, s ); },
+      "Cosmic Clarity SASpro - Sharpening",
+      function() { executeSASproSharpen( view, s ); }
+   );
+}
+
 function TAPR_main()
 {
    console.show();
@@ -360,7 +548,8 @@ function TAPR_main()
       console.noteln( "Redux working copy: " + workView.id );
       console.noteln( choice.skip ? "SPCC choice: Skip" : "SPCC choice: " + choice.preset.label );
 
-      // Processing stages are added task-by-task below this safe shell.
+      // Processing stages are wired into the final orchestration after all
+      // stage helpers have been implemented and regression-tested.
    }
    catch ( e )
    {
