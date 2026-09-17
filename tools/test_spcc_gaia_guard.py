@@ -8,7 +8,7 @@ text = SOURCE.read_text(encoding="utf-8", errors="strict")
 checks = {
     "Gaia/SP failure classifier": "function TAP_isGaiaDR3SPFailureText" in text,
     "SPCC failure handler": "function TAP_handleSPCCFailure" in text,
-    "Gaia DR3/SP guidance": "Gaia DR3/SP catalog" in text and "Gaia process" in text,
+    "Gaia DR3/SP guidance": "Gaia DR3/SP" in text and "Open the <b>Gaia</b> process" in text,
     "Skip option": "StdButton_Ignore" in text,
     "Abort option": "StdButton_Abort" in text,
     "SPCC returns completion state": "return true;" in text and "return false;" in text,
