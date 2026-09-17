@@ -11,6 +11,7 @@ on:
       - VERSION
       - tools/test_spcc_gaia_guard.py
       - tools/test_redux_static.py
+      - tools/test_redux_dialog_v8.py
       - tools/test_redux_package.py
       - tools/build_update.py
       - .github/workflows/test-development.yml
@@ -29,5 +30,7 @@ jobs:
         run: python3 tools/test_spcc_gaia_guard.py
       - name: Run Redux static regression test
         run: python3 tools/test_redux_static.py
+      - name: Run Redux V8 Dialog regression test
+        run: python3 tools/test_redux_dialog_v8.py
       - name: Run Redux package regression test
         run: python3 tools/test_redux_package.py
