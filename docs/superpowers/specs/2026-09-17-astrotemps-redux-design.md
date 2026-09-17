@@ -81,7 +81,7 @@ If neither primary nor fallback is available for a mandatory stage, Redux must s
 
 ## 6. Primary/fallback execution model
 
-Stages 1, 2, 4, 5, and 6 use a primary engine and a fallback engine.
+Stages 1, 2, 4, 5, and 7 use a primary engine and a fallback engine.
 
 Before each such stage, Redux creates one temporary invisible checkpoint of the current working image state.
 
@@ -143,13 +143,19 @@ Selecting that preset maps internally to the original R/G/B entries.
 
 The same grouping principle applies to all complete compatible filter sets found in the SPCC list, including the Sony color-sensor UV/IR-cut set.
 
+Only complete, unambiguous R/G/B groups should be exposed as Redux presets. Unmatched or ambiguous individual channel entries should be ignored rather than guessed.
+
 The Redux UI should therefore inherit newly available compatible SPCC filter sets without requiring hardcoded UI additions whenever possible.
 
 ### 7.2 ImageSolver and SPCC behavior
 
-If the image lacks an astrometric solution, Redux invokes ImageSolver before SPCC.
+The Redux filter dialog is shown before any ImageSolver/SPCC work.
 
-If the user chooses `Skip SPCC`, Redux bypasses SPCC intentionally and continues processing.
+If the user chooses `Skip SPCC`, Redux skips both ImageSolver and SPCC because the astrometric solution is only required for this Redux SPCC stage. Processing continues and later uses the UNLINKED stretch.
+
+If the user chooses a filter preset and continues, Redux checks whether the image already has a valid astrometric solution. If not, Redux invokes ImageSolver automatically before SPCC.
+
+ImageSolver must run without opening an additional routine configuration dialog. If automatic solving cannot complete, Redux stops with a clear ImageSolver error rather than opening another settings UI.
 
 If SPCC is requested and fails because Gaia DR3/SP / XPSD is unavailable or misconfigured, Redux should reuse the friendly Gaia DR3/SP handling already added to AstroTemps rather than silently pretending SPCC succeeded.
 
@@ -194,10 +200,11 @@ No division pass in Redux.
 
 ### Stage 3 — ImageSolver + SPCC
 
-- Solve astrometry if necessary.
-- Show the single Redux filter-selection dialog.
+- Show the single Redux filter-selection dialog first.
 - Dynamically generated capture-filter presets.
 - `Skip SPCC` supported.
+- Skip bypasses both ImageSolver and SPCC.
+- Otherwise solve astrometry automatically if necessary, then run SPCC.
 - Successful SPCC sets `spccCompleted = true`.
 - Skip sets `spccCompleted = false` without treating the run as failed.
 
@@ -397,8 +404,16 @@ Original target
    fallback: GraXpert Subtract
             |
             v
-3. ImageSolver + SPCC dialog
+3. SPCC filter dialog
    preset filter / Skip SPCC
+      |                |
+      | Skip           | Continue
+      |                v
+      |          ImageSolver if needed
+      |                |
+      |                v
+      |              SPCC
+      +----------------+
             |
             v
 4. BlurX Sharpen
@@ -516,7 +531,7 @@ The current update-package builder must be modified so the generated PixInsight 
 
 The package manifest/XRI remains one AstroTemps package unless implementation constraints demonstrate that two package entries are materially safer.
 
-Version validation must cover both distributed scripts so an update cannot accidentally ship a stale Redux script with a newer full script, or vice versa.
+Both distributed scripts should declare the same package release version. Version validation must cover both files so an update cannot accidentally ship a stale Redux script with a newer full script, or vice versa.
 
 The stable public update branch remains `pixinsight-update-repository`; Redux development occurs on `development` until explicitly approved for release.
 
@@ -531,7 +546,9 @@ Minimum automated checks:
 - target execution supports both active-view and Process Icon/view-target execution paths;
 - original image is cloned before processing;
 - dynamic SPCC preset grouping is present;
-- `Skip SPCC` is supported;
+- incomplete/ambiguous R/G/B filter groups are not guessed;
+- `Skip SPCC` bypasses both ImageSolver and SPCC;
+- ImageSolver path is non-interactive during routine Redux execution;
 - stretch selection maps SPCC success to Linked and SPCC skip to Unlinked;
 - primary/fallback mapping matches this spec;
 - checkpoint/restore logic wraps each fallback-enabled stage;
@@ -548,14 +565,15 @@ Manual PixInsight tests should cover at least:
 
 1. normal all-primary success path;
 2. SPCC success path and Linked stretch;
-3. Skip SPCC path and Unlinked stretch;
+3. Skip SPCC path, no ImageSolver execution, and Unlinked stretch;
 4. Gaia DR3/SP failure handling;
-5. each primary engine unavailable/failing with successful fallback;
-6. both primary and fallback unavailable for one stage;
-7. Process Icon drag onto a valid view;
-8. original image remains unchanged;
-9. stars-only image remains open at completion;
-10. final blend completes using the processed starless and stars-only images.
+5. automatic ImageSolver failure without opening an extra settings dialog;
+6. each primary engine unavailable/failing with successful fallback;
+7. both primary and fallback unavailable for one stage;
+8. Process Icon drag onto a valid view;
+9. original image remains unchanged;
+10. stars-only image remains open at completion;
+11. final blend completes using the processed starless and stars-only images.
 
 ## 15. Non-goals for Redux v1
 
