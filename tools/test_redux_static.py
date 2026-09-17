@@ -47,4 +47,40 @@ require("spccRedFilter" in REDUX and "spccGreenFilter" in REDUX and "spccBlueFil
 require("if ( choice.skip )" in REDUX, "Redux SPCC skip branch missing")
 require("executeSPCC" in REDUX, "Redux does not invoke proven SPCC implementation")
 
+for marker in (
+    "function TAPR_createStageCheckpoint",
+    "function TAPR_restoreStageCheckpoint",
+    "function TAPR_closeStageCheckpoint",
+    "function TAPR_runWithFallback",
+    "function TAPR_runOpticalCorrection",
+    "function TAPR_runGradientRemoval",
+    "function TAPR_runSharpening",
+    "BlurXTerminator - Correct Only",
+    "Cosmic Clarity SASpro - Correct Only",
+    "SetiAstro Automatic DBE - Subtract Only",
+    "GraXpert - Subtract Only",
+    "BlurXTerminator - Sharpening",
+    "Cosmic Clarity SASpro - Sharpening",
+):
+    require(marker in REDUX, f"Missing Redux fallback contract: {marker}")
+
+for setting in (
+    "s.blurCorrectOverlap = 0.20",
+    "s.adbeDivideFirst = false",
+    "s.graxpertSmoothing = 0.000",
+    "s.sharpenStars = 0.40",
+    "s.sharpenAdjustStarHalos = 0.00",
+    "s.sharpenAutoNonstellarPSF = true",
+    "s.sharpenNonstellar = 0.60",
+    "s.sharpenOverlap = 0.20",
+    "s.ccSharpMode = \"Both\"",
+    "s.ccSharpStellarAmount = 0.90",
+    "s.ccSharpNonStellarStrength = 3.00",
+    "s.ccSharpNonStellarAmount = 0.50",
+):
+    require(setting in REDUX, f"Missing Redux fixed setting: {setting}")
+
+require("TAPR_restoreStageCheckpoint" in REDUX and "fallbackFn" in REDUX,
+        "Redux fallback must restore checkpoint before fallback")
+
 print("PASS - Redux static contract")
