@@ -18,6 +18,8 @@ require(re.search(r"#ifndef\s+ASTROTEMPS_LIBRARY_MODE[\s\S]*#feature-id", FULL) 
         "Full feature registration is not guarded")
 require(re.search(r"#ifndef\s+ASTROTEMPS_LIBRARY_MODE[\s\S]*\bmain\s*\(\s*\)\s*;", FULL) is not None,
         "Full main() invocation is not guarded")
+require(re.search(r"#ifndef\s+ASTROTEMPS_LIBRARY_MODE\s*#engine\s+v8\s*#endif", FULL) is not None,
+        "Full script #engine v8 must be suppressed in library mode")
 
 require('#define ASTROTEMPS_LIBRARY_MODE' in REDUX, "Redux does not enable library mode")
 require('#include "AstroTemps_AutoProcessing_Tool.js"' in REDUX, "Redux does not include the full processing library")
@@ -27,7 +29,10 @@ require("function TAPR_createReduxWorkingCopy" in REDUX, "Redux working-copy hel
 require("function TAPR_preflight" in REDUX, "Redux preflight missing")
 require("Parameters.isViewTarget" in REDUX, "Process Icon/view-target path missing")
 require("_Redux" in REDUX, "Redux working-copy suffix missing")
-require("#engine v8" not in REDUX, "Redux must not declare a second #engine v8")
+engine_pos = REDUX.find("#engine v8")
+include_pos = REDUX.find('#include "AstroTemps_AutoProcessing_Tool.js"')
+require(engine_pos >= 0, "Redux root script must declare #engine v8")
+require(engine_pos < include_pos, "Redux #engine v8 must appear before the full-script include")
 
 for marker in (
     "function TAPR_buildSPCCPresets",
