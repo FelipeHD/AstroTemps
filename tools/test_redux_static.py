@@ -109,4 +109,47 @@ for setting in (
 require("executeStarX" in REDUX and "executeStarNet2" in REDUX,
         "Redux star-removal engines are not wired")
 
+for marker in (
+    "function TAPR_runBackgroundNeutralization",
+    "function TAPR_runNoiseReduction",
+    "function TAPR_runLukeHTStretch",
+    "function TAPR_applyColorSaturation",
+    "function TAPR_runDarkStructureEnhance",
+    "executeFindBackground( view, false )",
+    "executeBackgroundNeutralizationFromBackground",
+    "NoiseXTerminator - Noise Reduction",
+    "Cosmic Clarity SASpro - Noise Reduction",
+    "executeLukeHTStretch",
+    "ColorSaturation.AkimaSubsplines",
+    "executeDarkStructureEnhance",
+):
+    require(marker in REDUX, f"Missing Redux starless-processing contract: {marker}")
+
+for setting in (
+    "s.noiseColorSeparation = true",
+    "s.noiseFrequencySeparation = true",
+    "s.noiseHFIntensity = 0.25",
+    "s.noiseHFColor = 0.50",
+    "s.noiseLFIntensity = 0.10",
+    "s.noiseLFColor = 0.25",
+    "s.noiseFrequencyScale = 3.0",
+    "s.noiseIterations = 2",
+    "s.noiseOverlap = 0.20",
+    "s.ccNoiseLuma = 0.50",
+    "s.ccNoiseColor = 0.50",
+    "s.ccNoiseMode = \"full\"",
+    "s.ccNoiseModel = \"Standard\"",
+    "s.dseLayers = 8",
+    "s.dseExtractMask = false",
+    "s.dseScalingFunction = 1",
+    "s.dseAmount = 0.30",
+    "s.dseIterations = 1",
+):
+    require(setting in REDUX, f"Missing Redux starless fixed setting: {setting}")
+
+require("s.spcc = !!spccCompleted" in REDUX,
+        "Redux Luke HT mode is not driven by SPCC completion state")
+require("[0.00000, 0.20000]" in REDUX and "[1.00000, 0.20000]" in REDUX,
+        "Redux ColorSaturation curve is not fixed to +0.20")
+
 print("PASS - Redux static contract")
