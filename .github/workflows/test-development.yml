@@ -1,0 +1,23 @@
+name: Test Development Branch
+
+on:
+  push:
+    branches:
+      - development
+    paths:
+      - AstroTemps_AutoProcessing_Tool.js
+      - tools/test_spcc_gaia_guard.py
+      - .github/workflows/test-development.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run SPCC Gaia guard regression test
+        run: python3 tools/test_spcc_gaia_guard.py
