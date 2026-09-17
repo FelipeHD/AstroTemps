@@ -68,8 +68,10 @@
  */
 #engine v8
 
+#ifndef ASTROTEMPS_LIBRARY_MODE
 #feature-id Utilities > AstroTemps AutoProcessing Tool
 #feature-info AstroTemps AutoProcessing Tool v1.2.0.<br/>Windows build for PixInsight 1.9.4+ with embedded ImageSolver V8, native SPCC, RC-Astro/SASpro engines, GraXpert integration, StarNet2, interactive NBN, Lighthouse, and interactive Star Stretch.
+#endif
 CoreApplication.ensureMinimumVersion( 1, 9, 4 );
 
 /* V8 note: class/helper <pjsr/...> headers such as Sizer.jsh and
@@ -31464,4 +31466,6 @@ function main()
       return;
    }
 }
+#ifndef ASTROTEMPS_LIBRARY_MODE
 main();
+#endif
