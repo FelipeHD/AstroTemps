@@ -1,0 +1,437 @@
+===== executeFindBackground line 6834 =====
+006834: function executeFindBackground( view, customMode )
+006835: {
+006836:    logStep( "[7] Find and Neutralize Background - Find Background" );
+006837:    view.window.bringToFront();
+006838:    CoreApplication.processEvents();
+006839: 
+006840:    var regions = [];
+006841:    if ( customMode )
+006842:    {
+006843:       console.writeln( "Mode: Custom Search Area" );
+006844:       var customDialog = new TAPFB_CustomDialog( view );
+006845:       if ( !customDialog.execute() )
+006846:       {
+006847:          console.noteln( "Find Background Custom mode cancelled by user. Step skipped." );
+006848:          return { success: false, rect: null };
+006849:       }
+006850:       regions = customDialog.getScaledRegions();
+006851:       if ( regions.length == 0 )
+006852:       {
+006853:          console.noteln( "No Custom FindBackground regions were defined. Step skipped." );
+006854:          return { success: false, rect: null };
+006855:       }
+006856:    }
+006857:    else
+006858:    {
+006859:       console.writeln( "Mode: Full Image" );
+006860:    }
+006861: 
+006862:    TAPFB_deletePreviewById( view.window, "Background" );
+006863: 
+006864:    console.writeln( "Search routine             : Fast" );
+006865:    console.writeln( "Size                       : 50" );
+006866:    console.writeln( "Spacing rate               : 2" );
+006867:    console.writeln( "Search grid width          : 100" );
+006868:    console.writeln( "Number of starting points  : 40" );
+006869:    console.writeln( "Standard deviation filter  : ON" );
+006870:    console.writeln( "Preview name               : Background" );
+006871: 
+006872:    var finder;
+006873:    if ( customMode )
+006874:       finder = new FindBackgroundUserDefined( 50, 2, regions );
+006875:    else
+006876:       finder = new FindBackground( 50, 2 );
+006877: 
+006878:    finder.filterAverage = true;
+006879:    finder.filterStandardDeviation = true;
+006880:    finder.filterMedianAverageAbsoluteDifference = false;
+006881:    finder.filterPoissonIndex = false;
+006882:    finder.filterForObjects = false;
+006883:    finder.generatePreview = true;
+006884:    finder.setTarget( view.window );
+006885: 
+006886:    var prevMaskEnabled = view.maskEnabled;
+006887:    var wrapped = false;
+006888:    try
+006889:    {
+006890:       view.maskEnabled = false;
+006891:       view.beginProcess( UndoFlag_NoSwapFile );
+006892:       wrapped = true;
+006893: 
+006894:       if ( customMode )
+006895:          finder.fastSearchBackgroundUserDefined( 100, 40, true, "Background" );
+006896:       else
+006897:          finder.fastSearchBackground( 100, 40, true, "Background" );
+006898:    }
+006899:    finally
+006900:    {
+006901:       view.maskEnabled = prevMaskEnabled;
+006902:       if ( wrapped )
+006903:          view.endProcess();
+006904:    }
+006905: 
+006906:    var resultRect = finder.lastResult || null;
+006907: 
+006908:    console.noteln( "Background Found! Preview 'Background' created on " + view.id + "." );
+006909:    if ( resultRect )
+006910:       console.writeln(
+006911:          "Background ROI             : [" +
+006912:          Math.round( resultRect.left ) + ", " +
+006913:          Math.round( resultRect.top ) + "] -> [" +
+006914:          Math.round( resultRect.right ) + ", " +
+006915:          Math.round( resultRect.bottom ) + "]"
+006916:       );
+006917: 
+006918:    CoreApplication.processEvents();
+006919:    return { success: true, rect: resultRect };
+006920: }
+
+===== executeBackgroundNeutralizationFromBackground line 6942 =====
+006942: function executeBackgroundNeutralizationFromBackground( view, backgroundRect )
+006943: {
+006944:    logStep( "[7] Find and Neutralize Background - Background Neutralization" );
+006945: 
+006946:    if ( !backgroundRect )
+006947:       throw new Error(
+006948:          "BackgroundNeutralization requires the Background region returned by FindBackground."
+006949:       );
+006950: 
+006951:    if ( !TAP_previewExists( view.window, "Background" ) )
+006952:       throw new Error(
+006953:          "BackgroundNeutralization requires the preview 'Background', but it was not found on " +
+006954:          view.id + "."
+006955:       );
+006956: 
+006957:    var x0 = Math.max( 0, Math.round( backgroundRect.left ) );
+006958:    var y0 = Math.max( 0, Math.round( backgroundRect.top ) );
+006959:    var x1 = Math.min( view.image.width, Math.round( backgroundRect.right ) );
+006960:    var y1 = Math.min( view.image.height, Math.round( backgroundRect.bottom ) );
+006961: 
+006962:    if ( x1 <= x0 || y1 <= y0 )
+006963:       throw new Error(
+006964:          "BackgroundNeutralization received an invalid Background ROI."
+006965:       );
+006966: 
+006967:    var P = new BackgroundNeutralization;
+006968: 
+006969:    /*
+006970:     * Explicitly use the current *_work image as the reference image and
+006971:     * reproduce From Preview -> Background by assigning the same ROI that
+006972:     * FindBackground used to create the Background preview.
+006973:     */
+006974:    P.backgroundReferenceViewId = view.id;
+006975:    P.backgroundLow = 0.0000000;
+006976:    P.backgroundHigh = 0.1000000;
+006977:    P.useROI = true;
+006978:    P.roiX0 = x0;
+006979:    P.roiY0 = y0;
+006980:    P.roiX1 = x1;
+006981:    P.roiY1 = y1;
+006982:    P.mode = BackgroundNeutralization.RescaleAsNeeded;
+006983:    P.targetBackground = 0.0010000;
+006984: 
+006985:    console.writeln( "Reference Image : " + view.id );
+006986:    console.writeln( "Region of Interest: ON" );
+006987:    console.writeln( "From Preview    : " + view.id + "->Background" );
+006988:    console.writeln( "ROI             : [" + x0 + ", " + y0 + "] -> [" + x1 + ", " + y1 + "]" );
+006989:    console.writeln( "Lower limit     : 0.000000" );
+006990:    console.writeln( "Upper limit     : 0.100000" );
+006991:    console.writeln( "Working mode    : Rescale as needed" );
+006992: 
+006993:    view.window.bringToFront();
+006994: 
+006995:    if ( !P.executeOn( view ) )
+006996:       throw new Error( "BackgroundNeutralization failed." );
+006997: 
+006998:    console.noteln( "BackgroundNeutralization completed." );
+006999: 
+007000:    TAPFB_deletePreviewById( view.window, "Background" );
+007001:    console.noteln( "Preview 'Background' deleted after BackgroundNeutralization." );
+007002: 
+007003:    CoreApplication.processEvents();
+007004: }
+
+===== TAPSTAR_processSetiStarStretch line 7270 =====
+007270: function TAPSTAR_processSetiStarStretch( starsView, stretchAmount, colorBoost, removeGreen, outputId, showOutput )
+007271: {
+007272:    var result = TAPSTAR_cloneView(
+007273:       starsView, outputId || "NBtoRGB_stars", showOutput !== false );
+007274: 
+007275:    if ( removeGreen )
+007276:       TAPSTAR_applySCNR( result );
+007277: 
+007278:    TAPSTAR_applyStarStretch(
+007279:       result,
+007280:       clampValue( stretchAmount, 0.0, 8.0 ),
+007281:       clampValue( colorBoost, 0.0, 3.0 )
+007282:    );
+007283: 
+007284:    if ( showOutput !== false )
+007285:    {
+007286:       result.window.show();
+007287:       result.window.bringToFront();
+007288:       result.window.zoomToOptimalFit();
+007289:    }
+007290: 
+007291:    CoreApplication.processEvents();
+007292:    return result;
+007293: }
+
+===== executeLukeHTStretch line 8622 =====
+008622: function executeLukeHTStretch( view, s )
+008623: {
+008624:    logStep( "[8] Image Stretch - Luke's HT Stretch" );
+008625: 
+008626:    if ( view == null || view.isNull )
+008627:       throw new Error( "Luke's HT Stretch requires a valid _work image." );
+008628: 
+008629:    // User-defined automatic policy:
+008630:    // SPCC enabled -> LINKED; SPCC disabled -> UNLINKED.
+008631:    // A linked RGB expression requires a color target, so mono data safely falls
+008632:    // back to the unlinked expression even if SPCC was enabled.
+008633:    var linked = !!s.spcc && view.image.isColor;
+008634: 
+008635:    var P = new PixelMath;
+008636:    if ( linked )
+008637:    {
+008638:       P.symbols = "C=-2.8, B=0.20, m, d, c";
+008639:       P.expression =
+008640:          "m=(med($T[0])+med($T[1])+med($T[2]))/3;\n" +
+008641:          "d=(mdev($T[0])+mdev($T[1])+mdev($T[2]))/3;\n" +
+008642:          "c=min(max(0,m+C*1.4826*d),1);\n" +
+008643:          "mtf(mtf(B,m-c),max(0,($T-c)/~c))";
+008644:    }
+008645:    else
+008646:    {
+008647:       P.symbols = "C=-2.8, B=0.20, c";
+008648:       P.expression =
+008649:          "c=min(max(0,med($T)+C*1.4826*mdev($T)),1);\n" +
+008650:          "mtf(mtf(B,med($T)-c),max(0,($T-c)/~c))";
+008651:    }
+008652: 
+008653:    TAPIC_configurePixelMathInPlace( P );
+008654: 
+008655:    console.writeln( "Stretch method               : Luke's HT Stretch" );
+008656:    console.writeln( "C / B                        : -2.80 / 0.20" );
+008657:    console.writeln( "Automatic mode               : " + ( linked ? "LINKED (SPCC enabled)" : "UNLINKED" ) );
+008658:    if ( !!s.spcc && !view.image.isColor )
+008659:       console.warningln( "Luke's HT Stretch: SPCC is enabled, but the target is monochrome. Using UNLINKED mode because the LINKED formula requires RGB channels." );
+008660: 
+008661:    if ( !P.executeOn( view ) )
+008662:       throw new Error( "Luke's HT Stretch PixelMath execution failed or was aborted." );
+008663: 
+008664:    TAPSS_disableSTF( view );
+008665:    CoreApplication.processEvents();
+008666:    console.noteln( "Luke's HT Stretch completed." );
+008667: }
+
+===== executeDarkStructureEnhance line 8900 =====
+008900: function executeDarkStructureEnhance( view, s )
+008901: {
+008902:    logStep( "[11] Dark Structure Enhance" );
+008903: 
+008904:    var amount = clampValue( s.dseAmount, 0.0, 0.99 );
+008905:    var data =
+008906:    {
+008907:       targetView: view,
+008908:       numberOfLayers: Math.round( clampValue( s.dseLayers, 7, 12 ) ),
+008909:       scalingFunction: Math.round( clampValue( s.dseScalingFunction, 0, TAPDSE_scalingFunctions.length - 1 ) ),
+008910:       median: 0.5 * amount + 0.5,
+008911:       iterations: Math.round( clampValue( s.dseIterations, 1, 10 ) ),
+008912:       viewMask: !!s.dseExtractMask
+008913:    };
+008914: 
+008915:    console.writeln( "Target image      : " + view.id );
+008916:    console.writeln( "Layers to remove  : " + data.numberOfLayers );
+008917:    console.writeln( "Extract mask      : " + ( data.viewMask ? "ON" : "OFF" ) );
+008918:    console.writeln( "Scaling function  : " + TAPDSE_scalingFunctions[data.scalingFunction].name );
+008919:    console.writeln( "Amount            : " + amount.toFixed( 2 ) );
+008920:    console.writeln( "Iterations        : " + data.iterations );
+008921: 
+008922:    var hist = new HistogramTransformation;
+008923:    hist.H =
+008924:    [
+008925:       [ 0, 0.5,         1, 0, 1 ],
+008926:       [ 0, 0.5,         1, 0, 1 ],
+008927:       [ 0, 0.5,         1, 0, 1 ],
+008928:       [ 0, data.median, 1, 0, 1 ],
+008929:       [ 0, 0.5,         1, 0, 1 ]
+008930:    ];
+008931: 
+008932:    var mask = TAPDSE_doMask( data );
+008933:    var pc = new ProcessContainer;
+008934: 
+008935:    for ( var i = 0; i < data.iterations; ++i )
+008936:    {
+008937:       pc.add( hist );
+008938:       pc.setMask( i, mask, false );
+008939:    }
+008940: 
+008941:    data.targetView.beginProcess();
+008942:    pc.executeOn( data.targetView, false );
+008943:    data.targetView.endProcess();
+008944: 
+008945:    mask.removeMaskReferences();
+008946: 
+008947:    if ( data.viewMask )
+008948:    {
+008949:       mask.show();
+008950:    }
+008951:    else
+008952:    {
+008953:       mask.forceClose();
+008954:    }
+008955: 
+008956:    CoreApplication.processEvents();
+008957:    console.noteln( "Dark Structure Enhance completed." );
+008958: }
+
+===== executeScreenStars line 9012 =====
+009012: function executeScreenStars( starlessView, starsView )
+009013: {
+009014:    logStep( "[13] Blend Image + Stars" );
+009015: 
+009016:    var compatibility = TAPSCREEN_isCompatible( starlessView, starsView );
+009017:    if ( compatibility != "" )
+009018:       throw new Error(
+009019:          "Blend Image + Stars cannot combine the selected views: " + compatibility + "."
+009020:       );
+009021: 
+009022:    console.writeln( "Mode                   : Star replacement" );
+009023:    console.writeln( "Method                 : Screen / Unscreen" );
+009024:    console.writeln( "Enable reverse stretch : OFF" );
+009025:    console.writeln( "Starless view          : " + starlessView.id );
+009026:    console.writeln( "Stars view             : " + starsView.id );
+009027:    console.writeln( "Create new image       : ON" );
+009028: 
+009029:    var outputId = uniqueImageId( "Final_Image" );
+009030:    console.writeln( "Starry image id        : " + outputId );
+009031: 
+009032:    var PM = new PixelMath;
+009033:    PM.expression =
+009034:       "E1 = " + starlessView.id + ";\n" +
+009035:       "E2 = " + starsView.id + ";\n" +
+009036:       "(E1 + E2 - E1*E2)";
+009037:    PM.useSingleExpression = true;
+009038:    PM.symbols = "E1, E2";
+009039:    PM.clearImageCacheAndExit = false;
+009040:    PM.cacheGeneratedImages = false;
+009041:    PM.generateOutput = true;
+009042:    PM.singleThreaded = false;
+009043:    PM.optimization = true;
+009044:    PM.use64BitWorkingImage = false;
+009045:    PM.rescale = false;
+009046:    PM.rescaleLower = 0;
+009047:    PM.rescaleUpper = 1;
+009048:    PM.truncate = true;
+009049:    PM.truncateLower = 0;
+009050:    PM.truncateUpper = 1;
+009051:    PM.createNewImage = true;
+009052:    PM.showNewImage = true;
+009053:    PM.newImageId = outputId;
+009054:    PM.newImageWidth = 0;
+009055:    PM.newImageHeight = 0;
+009056:    PM.newImageAlpha = false;
+009057:    PM.newImageColorSpace = PixelMath.SameAsTarget;
+009058:    PM.newImageSampleFormat = PixelMath.SameAsTarget;
+009059: 
+009060:    if ( !PM.executeOn( starlessView ) )
+009061:       throw new Error( "Blend Image + Stars / Star replacement failed." );
+009062: 
+009063:    var resultWindow = TAPSTAR_getWindowById( outputId );
+009064:    if ( resultWindow == null )
+009065:       throw new Error( "Blend Image + Stars completed but the Final_Image window could not be located." );
+009066: 
+009067:    resultWindow.show();
+009068:    resultWindow.bringToFront();
+009069:    resultWindow.zoomToOptimalFit();
+009070:    CoreApplication.processEvents();
+009071: 
+009072:    console.noteln( "Blend Image + Stars complete: " + outputId );
+009073:    return resultWindow.mainView;
+009074: }
+
+===== executeNoiseX line 13284 =====
+013284: function executeNoiseX( view, s )
+013285: {
+013286:    logStep( "[5] Noise Reduction - NoiseXTerminator" );
+013287: 
+013288:    if ( typeof NoiseXTerminator == "undefined" )
+013289:       throw new Error( "NoiseXTerminator is not installed or is not available to PJSR." );
+013290: 
+013291:    var P = new NoiseXTerminator;
+013292: 
+013293:    if ( typeof P.denoise == "undefined" ||
+013294:         typeof P.enable_color_separation == "undefined" ||
+013295:         typeof P.enable_frequency_separation == "undefined" ||
+013296:         typeof P.iterations == "undefined" )
+013297:       throw new Error( "The installed NoiseXTerminator does not expose the expected PixInsight 1.9.4 AI4 parameters." );
+013298: 
+013299:    // Do not assign ml_version. A fresh NoiseXTerminator instance keeps
+013300:    // RC-Astro's native "Latest" selection, so newly installed ML models are
+013301:    // picked up automatically without changing FT-Astro.
+013302:    var colorSep = !!s.noiseColorSeparation;
+013303:    var freqSep  = !!s.noiseFrequencySeparation;
+013304: 
+013305:    P.enable_color_separation = colorSep;
+013306:    P.enable_frequency_separation = freqSep;
+013307: 
+013308:    // Populate the full 1.9.4 schema, even when a particular mode does not use
+013309:    // every field. This mirrors the current Instance Source Code.
+013310:    P.denoise = clampValue( s.noiseSimpleDenoise, 0, 1 );
+013311:    if ( typeof P.denoise_intensity != "undefined" )
+013312:       P.denoise_intensity = clampValue( s.noiseIntensity, 0, 1 );
+013313:    if ( typeof P.denoise_color != "undefined" )
+013314:       P.denoise_color = clampValue( s.noiseColor, 0, 1 );
+013315:    if ( typeof P.denoise_high_freq != "undefined" )
+013316:       P.denoise_high_freq = clampValue( s.noiseHighFreq, 0, 1 );
+013317:    if ( typeof P.denoise_low_freq != "undefined" )
+013318:       P.denoise_low_freq = clampValue( s.noiseLowFreq, 0, 1 );
+013319:    if ( typeof P.denoise_intensity_high_freq != "undefined" )
+013320:       P.denoise_intensity_high_freq = clampValue( s.noiseHFIntensity, 0, 1 );
+013321:    if ( typeof P.denoise_intensity_low_freq != "undefined" )
+013322:       P.denoise_intensity_low_freq = clampValue( s.noiseLFIntensity, 0, 1 );
+013323:    if ( typeof P.denoise_color_high_freq != "undefined" )
+013324:       P.denoise_color_high_freq = clampValue( s.noiseHFColor, 0, 1 );
+013325:    if ( typeof P.denoise_color_low_freq != "undefined" )
+013326:       P.denoise_color_low_freq = clampValue( s.noiseLFColor, 0, 1 );
+013327: 
+013328:    if ( typeof P.frequency_scale != "undefined" )
+013329:       P.frequency_scale = clampValue( s.noiseFrequencyScale, 1.0, 20.0 );
+013330:    P.iterations = Math.round( clampValue( s.noiseIterations, 1, 5 ) );
+013331:    // The current native NoiseX UI does not expose Detail; leave its fresh
+013332:    // process default untouched. Tile Overlap remains user-configurable.
+013333:    if ( typeof P.overlap != "undefined" ) P.overlap = clampValue( s.noiseOverlap, 0, 1 );
+013334: 
+013335:    console.writeln( "ML Version           : Latest (native NoiseXTerminator default)" );
+013336:    console.writeln( "Color separation     : " + ( colorSep ? "ON" : "OFF" ) );
+013337:    console.writeln( "Frequency separation : " + ( freqSep ? "ON" : "OFF" ) );
+013338:    console.writeln( "Iterations           : " + P.iterations );
+013339:    console.writeln( "Tile Overlap         : " + ( typeof P.overlap != "undefined" ? P.overlap.toFixed( 2 ) : "n/a" ) );
+013340: 
+013341:    view.window.bringToFront();
+013342:    if ( !P.executeOn( view ) )
+013343:       throw new Error( "NoiseXTerminator failed." );
+013344: 
+013345:    CoreApplication.processEvents();
+013346: }
+
+===== executeSASproDenoise line 13348 =====
+013348: function executeSASproDenoise( view, s )
+013349: {
+013350:    logStep( "[5] Noise Reduction - Cosmic Clarity SASpro" );
+013351: 
+013352:    TAP_configureSASproShared( s, "ccNoise" );
+013353:    SetiAstroSharpParameters.targetView = view;
+013354:    SetiAstroSharpParameters.processMode = "denoise";
+013355:    SetiAstroSharpParameters.denoiseLuma = clampValue( s.ccNoiseLuma, 0, 1 );
+013356:    SetiAstroSharpParameters.denoiseColor = clampValue( s.ccNoiseColor, 0, 1 );
+013357:    SetiAstroSharpParameters.denoiseMode = s.ccNoiseMode;
+013358:    SetiAstroSharpParameters.separateDenoiseChannels = !!s.ccNoiseSeparateChannels;
+013359:    SetiAstroSharpParameters.denoiseModel = s.ccNoiseModel;
+013360: 
+013361:    view.window.bringToFront();
+013362:    runCosmicClarityViaSasproCLI( view );
+013363:    CoreApplication.processEvents();
+013364: }
