@@ -1,0 +1,22 @@
+name: Probe Redux Helpers
+
+on:
+  push:
+    branches:
+      - redux-implementation
+    paths:
+      - tools/probe_redux_helpers.py
+      - .github/workflows/probe-redux-helpers.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Probe helpers
+        run: python3 tools/probe_redux_helpers.py
