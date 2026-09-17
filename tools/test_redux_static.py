@@ -152,4 +152,40 @@ require("s.spcc = !!spccCompleted" in REDUX,
 require("[0.00000, 0.20000]" in REDUX and "[1.00000, 0.20000]" in REDUX,
         "Redux ColorSaturation curve is not fixed to +0.20")
 
+for marker in (
+    "function TAPR_runStarStretch",
+    "function TAPR_blendStarsIntoRedux",
+    "function TAPR_runWorkflow",
+    "TAPSTAR_applySCNR",
+    "TAPSTAR_applyStarStretch",
+    "executeScreenStars",
+    "5.50",
+    "1.40",
+    "AstroTemps Redux completed successfully",
+):
+    require(marker in REDUX, f"Missing Redux final-stage contract: {marker}")
+
+workflow_match = re.search(r"function\s+TAPR_runWorkflow\s*\([^)]*\)\s*\{([\s\S]*?)\n\}", REDUX)
+require(workflow_match is not None, "Redux workflow function could not be parsed")
+workflow = workflow_match.group(1)
+ordered_calls = [
+    "TAPR_runOpticalCorrection",
+    "TAPR_runGradientRemoval",
+    "TAPR_runSolverAndSPCC",
+    "TAPR_runSharpening",
+    "TAPR_runStarRemoval",
+    "TAPR_runBackgroundNeutralization",
+    "TAPR_runNoiseReduction",
+    "TAPR_runLukeHTStretch",
+    "TAPR_applyColorSaturation",
+    "TAPR_runDarkStructureEnhance",
+    "TAPR_runStarStretch",
+    "TAPR_blendStarsIntoRedux",
+]
+positions = [workflow.find(name) for name in ordered_calls]
+require(all(p >= 0 for p in positions), "Redux workflow is missing one or more required stages")
+require(positions == sorted(positions), "Redux workflow stage order is incorrect")
+require(workflow.find("TAPR_runStarRemoval") < workflow.find("TAPR_runNoiseReduction"),
+        "Redux must remove stars before Noise Reduction")
+
 print("PASS - Redux static contract")
