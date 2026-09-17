@@ -153,6 +153,188 @@ function TAPR_preflight( targetView )
    console.noteln( "Redux preflight completed." );
 }
 
+function TAPR_filterPresetBaseName( name, channel )
+{
+   name = String( name );
+   channel = String( channel ).toUpperCase();
+
+   var uvir = new RegExp( "\\s+" + channel + "-UVIRcut$", "i" );
+   if ( uvir.test( name ) )
+      return name.replace( uvir, " UVIRcut" ).replace( /\s+/g, " " ).replace( /^\s+|\s+$/g, "" );
+
+   var suffix = new RegExp( "(?:\\s+|[-_])" + channel + "$", "i" );
+   if ( suffix.test( name ) )
+      return name.replace( suffix, "" ).replace( /^\s+|\s+$/g, "" );
+
+   var token = new RegExp( "(^|[\\s_-])" + channel + "(?=$|[\\s_-])", "i" );
+   if ( token.test( name ) )
+   {
+      var b = name.replace( token, "$1" );
+      b = b.replace( /\s+/g, " " ).replace( /--+/g, "-" ).replace( /^[-_\s]+|[-_\s]+$/g, "" );
+      return b.length > 0 ? b : null;
+   }
+
+   return null;
+}
+
+function TAPR_buildSPCCPresets( filterNames )
+{
+   var groups = {};
+   for ( var i = 0; i < filterNames.length; ++i )
+   {
+      var name = String( filterNames[i] );
+      var channel = TAP_spccFilterChannel( name );
+      if ( channel != "R" && channel != "G" && channel != "B" )
+         continue;
+
+      var base = TAPR_filterPresetBaseName( name, channel );
+      if ( base == null || base.length == 0 )
+         continue;
+
+      var key = base.toLowerCase();
+      if ( groups[key] == null )
+         groups[key] = { label: base, R: [], G: [], B: [] };
+      groups[key][channel].push( name );
+   }
+
+   var presets = [];
+   for ( var key in groups )
+   {
+      var g = groups[key];
+      if ( g.R.length == 1 && g.G.length == 1 && g.B.length == 1 &&
+           g.R[0] != g.G[0] && g.R[0] != g.B[0] && g.G[0] != g.B[0] )
+      {
+         presets.push( {
+            label: g.label,
+            red: g.R[0],
+            green: g.G[0],
+            blue: g.B[0]
+         } );
+      }
+   }
+
+   presets.sort( function( a, b )
+   {
+      var aa = a.label.toLowerCase();
+      var bb = b.label.toLowerCase();
+      return aa < bb ? -1 : aa > bb ? 1 : 0;
+   } );
+
+   return presets;
+}
+
+function TAPR_SPCCDialog( presets )
+{
+   this.__base__ = Dialog;
+   this.__base__();
+
+   var self = this;
+   this.windowTitle = "AstroTemps Redux - SPCC";
+   this.choice = null;
+
+   this.info_Label = new Label( this );
+   this.info_Label.useRichText = true;
+   this.info_Label.wordWrapping = true;
+   this.info_Label.text =
+      "<p>Select the capture filter used for this image. Redux maps the preset " +
+      "to the SPCC R/G/B transmission curves automatically.</p>";
+
+   this.filter_Label = new Label( this );
+   this.filter_Label.text = "Capture Filter:";
+   this.filter_Label.textAlignment = TextAlign_Right | TextAlign_VertCenter;
+
+   this.filter_Combo = new ComboBox( this );
+   for ( var i = 0; i < presets.length; ++i )
+      this.filter_Combo.addItem( presets[i].label );
+   this.filter_Combo.currentItem = presets.length > 0 ? 0 : -1;
+
+   this.newInstance_Button = new ToolButton( this );
+   try { this.newInstance_Button.icon = this.scaledResource( ":/process-interface/new-instance.png" ); } catch ( eIcon ) {}
+   this.newInstance_Button.toolTip = "Create a reusable AstroTemps Redux Process Icon. The capture filter is not stored in the icon.";
+   this.newInstance_Button.onMousePress = function()
+   {
+      Parameters.clear();
+      Parameters.set( "reduxInstance", true );
+      self.newInstance();
+   };
+
+   this.skip_Button = new PushButton( this );
+   this.skip_Button.text = "Skip SPCC";
+   this.skip_Button.onClick = function()
+   {
+      self.choice = { skip: true, preset: null };
+      self.ok();
+   };
+
+   this.continue_Button = new PushButton( this );
+   this.continue_Button.text = "Continue";
+   this.continue_Button.defaultButton = true;
+   this.continue_Button.enabled = presets.length > 0;
+   this.continue_Button.onClick = function()
+   {
+      if ( self.filter_Combo.currentItem < 0 || self.filter_Combo.currentItem >= presets.length )
+         return;
+      self.choice = { skip: false, preset: presets[self.filter_Combo.currentItem] };
+      self.ok();
+   };
+
+   var filterRow = new HorizontalSizer;
+   filterRow.spacing = 8;
+   filterRow.add( this.filter_Label );
+   filterRow.add( this.filter_Combo, 100 );
+
+   var buttonRow = new HorizontalSizer;
+   buttonRow.spacing = 8;
+   buttonRow.add( this.newInstance_Button );
+   buttonRow.addStretch();
+   buttonRow.add( this.skip_Button );
+   buttonRow.add( this.continue_Button );
+
+   this.sizer = new VerticalSizer;
+   this.sizer.margin = 10;
+   this.sizer.spacing = 10;
+   this.sizer.add( this.info_Label );
+   this.sizer.add( filterRow );
+   this.sizer.add( buttonRow );
+
+   this.adjustToContents();
+   this.setFixedWidth( Math.max( this.width, 520 ) );
+}
+TAPR_SPCCDialog.prototype = new Dialog;
+
+function TAPR_showSPCCDialog( presets )
+{
+   var dialog = new TAPR_SPCCDialog( presets );
+   if ( !dialog.execute() )
+      return null;
+   return dialog.choice;
+}
+
+function TAPR_runSolverAndSPCC( workView, choice )
+{
+   if ( choice == null )
+      throw new Error( "Redux SPCC selection is unavailable." );
+
+   if ( choice.skip )
+   {
+      console.warningln( "SPCC skipped by user. ImageSolver is not required for this Redux run." );
+      return false;
+   }
+
+   if ( choice.preset == null )
+      throw new Error( "Redux SPCC requires a valid capture-filter preset." );
+
+   console.noteln( "Redux SPCC preset: " + choice.preset.label );
+   var s = defaultSettings();
+   s.spcc = true;
+   s.spccRedFilter = choice.preset.red;
+   s.spccGreenFilter = choice.preset.green;
+   s.spccBlueFilter = choice.preset.blue;
+
+   var completed = executeSPCC( workView, s );
+   return completed === true;
+}
+
 function TAPR_main()
 {
    console.show();
@@ -164,9 +346,21 @@ function TAPR_main()
    {
       var sourceView = TAPR_getTargetView();
       TAPR_preflight( sourceView );
+
+      var presets = TAPR_buildSPCCPresets( TAP_loadSPCCFilterNames() );
+      var choice = TAPR_showSPCCDialog( presets );
+      if ( choice == null )
+      {
+         console.warningln( "AstroTemps Redux cancelled by user before processing." );
+         return;
+      }
+
       var workView = TAPR_createReduxWorkingCopy( sourceView );
       console.noteln( "Original preserved: " + sourceView.id );
       console.noteln( "Redux working copy: " + workView.id );
+      console.noteln( choice.skip ? "SPCC choice: Skip" : "SPCC choice: " + choice.preset.label );
+
+      // Processing stages are added task-by-task below this safe shell.
    }
    catch ( e )
    {
