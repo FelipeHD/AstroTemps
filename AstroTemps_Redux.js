@@ -232,27 +232,58 @@ var TAPR_SPCCDialog = class extends Dialog
       super();
 
    var self = this;
-   this.windowTitle = "AstroTemps Redux - SPCC";
+   this.windowTitle = TAP_TR_UI( "AstroTemps Redux - SPCC" );
    this.choice = null;
+   this.languageChanged = false; // TAPR language selector - development
 
-   this.info_Label = new Label( this );
+   
+   this.language_Label = new Label( this );
+   this.language_Label.text = TAP_TR_UI( "Language:" );
+   this.language_Label.textAlignment = TextAlign_Right | TextAlign_VertCenter;
+
+   this.language_Combo = new ComboBox( this );
+   this.language_Combo.addItem( "English (EN-US)" );
+   this.language_Combo.addItem( "Português (PT-BR)" );
+   this.language_Combo.currentItem =
+      TAP_CURRENT_LANGUAGE == TAP_LANGUAGE_PT_BR ? 1 : 0;
+   this.language_Combo.toolTip = TAP_TR_UI(
+      "Changes the AstroTemps interface language. Process Console output remains in English."
+   );
+   this.language_Combo.onItemSelected = function( index )
+   {
+      var nextLanguage = index == 1 ? TAP_LANGUAGE_PT_BR : TAP_LANGUAGE_EN_US;
+      if ( nextLanguage == TAP_CURRENT_LANGUAGE )
+         return;
+
+      TAP_setLanguage( nextLanguage );
+      self.languageChanged = true;
+      self.cancel();
+   };
+
+   var languageRow = new HorizontalSizer;
+   languageRow.spacing = 6;
+   languageRow.addStretch();
+   languageRow.add( this.language_Label );
+   languageRow.add( this.language_Combo );
+
+this.info_Label = new Label( this );
    this.info_Label.useRichText = true;
    this.info_Label.wordWrapping = true;
    this.info_Label.text =
-      "<p>Select the capture filter used for this image. Redux maps the preset " +
-      "to the SPCC R/G/B transmission curves automatically.</p>";
+      TAP_TR_UI( "<p>Select the capture filter used for this image. Redux maps the preset " +
+      "to the SPCC R/G/B transmission curves automatically.</p>" );
 
    // Support the Project -------------------------------------------------
    this.support_Group = new GroupBox( this );
-   this.support_Group.title = "Support the Project";
+   this.support_Group.title = TAP_TR_UI( "Support the Project" );
    this.support_Group.setScaledMinHeight( 170 );
 
    this.support_Text = new Label( this.support_Group );
    this.support_Text.useRichText = true;
    this.support_Text.wordWrapping = true;
    this.support_Text.text =
-      "If you find AstroTemps Redux useful and would like to support its development, " +
-      "consider buying me a coffee.";
+      TAP_TR_UI( "If you find AstroTemps Redux useful and would like to support its development, " +
+      "consider buying me a coffee." );
 
    this.coffee_Link = new Label( this.support_Group );
    this.coffee_Link.useRichText = true;
@@ -261,9 +292,9 @@ var TAPR_SPCCDialog = class extends Dialog
    this.coffee_Link.textAlignment = TextAlign_Left | TextAlign_VertCenter;
    this.coffee_Link.setScaledMinHeight( 36 );
    this.coffee_Link.text =
-      "<span style=\"color:#67a9ff\"><b>&nbsp;&nbsp;buymeacoffee.com/temponi</b></span>";
+      TAP_TR_UI( "<span style=\"color:#67a9ff\"><b>&nbsp;&nbsp;buymeacoffee.com/temponi</b></span>" );
    this.coffee_Link.toolTip =
-      "<p>Open https://www.buymeacoffee.com/temponi in your default browser.</p>";
+      TAP_TR_UI( "<p>Open https://www.buymeacoffee.com/temponi in your default browser.</p>" );
    try
    {
       this.coffee_Link.cursor = new Cursor( StdCursor_PointingHand );
@@ -285,15 +316,15 @@ var TAPR_SPCCDialog = class extends Dialog
 
    // PIX — Brazil --------------------------------------------------------
    this.pix_Group = new GroupBox( this );
-   this.pix_Group.title = "PIX — Brazil";
+   this.pix_Group.title = TAP_TR_UI( "PIX — Brazil" );
    this.pix_Group.setScaledMinHeight( 170 );
 
    this.pix_Text = new Label( this.pix_Group );
    this.pix_Text.useRichText = true;
    this.pix_Text.wordWrapping = true;
    this.pix_Text.text =
-      "Brazilian users who would like to support AstroTemps Redux via PIX can use " +
-      "the QR Code shown here.";
+      TAP_TR_UI( "Brazilian users who would like to support AstroTemps Redux via PIX can use " +
+      "the QR Code shown here." );
 
    this.pix_QR = new TAPInfo_PIXQRControl( this.pix_Group );
 
@@ -319,7 +350,7 @@ var TAPR_SPCCDialog = class extends Dialog
    supportRow.add( this.pix_Group, 100 );
 
    this.filter_Label = new Label( this );
-   this.filter_Label.text = "Capture Filter:";
+   this.filter_Label.text = TAP_TR_UI( "Capture Filter:" );
    this.filter_Label.textAlignment = TextAlign_Right | TextAlign_VertCenter;
 
    this.filter_Combo = new ComboBox( this );
@@ -329,7 +360,7 @@ var TAPR_SPCCDialog = class extends Dialog
 
    this.newInstance_Button = new ToolButton( this );
    try { this.newInstance_Button.icon = this.scaledResource( ":/process-interface/new-instance.png" ); } catch ( eIcon ) {}
-   this.newInstance_Button.toolTip = "Create a reusable AstroTemps Redux Process Icon. The capture filter is not stored in the icon.";
+   this.newInstance_Button.toolTip = TAP_TR_UI( "Create a reusable AstroTemps Redux Process Icon. The capture filter is not stored in the icon." );
    this.newInstance_Button.onMousePress = function()
    {
       Parameters.clear();
@@ -338,7 +369,7 @@ var TAPR_SPCCDialog = class extends Dialog
    };
 
    this.skip_Button = new PushButton( this );
-   this.skip_Button.text = "Skip SPCC";
+   this.skip_Button.text = TAP_TR_UI( "Skip SPCC" );
    this.skip_Button.onClick = function()
    {
       self.choice = { skip: true, preset: null };
@@ -346,7 +377,7 @@ var TAPR_SPCCDialog = class extends Dialog
    };
 
    this.continue_Button = new PushButton( this );
-   this.continue_Button.text = "Continue";
+   this.continue_Button.text = TAP_TR_UI( "Continue" );
    this.continue_Button.defaultButton = true;
    this.continue_Button.enabled = presets.length > 0;
    this.continue_Button.onClick = function()
@@ -372,6 +403,7 @@ var TAPR_SPCCDialog = class extends Dialog
    this.sizer = new VerticalSizer;
    this.sizer.margin = 10;
    this.sizer.spacing = 10;
+   this.sizer.add( languageRow );
    this.sizer.add( this.info_Label );
    this.sizer.add( filterRow );
    this.sizer.add( supportRow );
@@ -384,10 +416,19 @@ var TAPR_SPCCDialog = class extends Dialog
 
 function TAPR_showSPCCDialog( presets )
 {
-   var dialog = new TAPR_SPCCDialog( presets );
-   if ( !dialog.execute() )
-      return null;
-   return dialog.choice;
+   for ( ;; )
+   {
+      var dialog = new TAPR_SPCCDialog( presets );
+      var accepted = dialog.execute();
+
+      if ( dialog.languageChanged )
+         continue;
+
+      if ( !accepted )
+         return null;
+
+      return dialog.choice;
+   }
 }
 
 function TAPR_runSolverAndSPCC( workView, choice )
@@ -952,7 +993,7 @@ function TAPR_main()
    catch ( e )
    {
       console.criticalln( "AstroTemps Redux stopped: " + TAP_errorText( e ) );
-      ( new MessageBox(
+      ( TAP_UIMessageBox(
          "<p><b>AstroTemps Redux stopped.</b></p><p>" + TAP_errorText( e ) + "</p>",
          TAPR_TITLE,
          StdIcon_Error,
