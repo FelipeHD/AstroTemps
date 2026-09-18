@@ -1,7 +1,7 @@
 /*
  * =====================================================================
  * AstroTemps AutoProcessing Tool 
- * Version 1.3.3 - Windows
+ * Version 1.3.4 - Windows
  * PixInsight / PJSR
  *
  * Workflow:
@@ -72,7 +72,7 @@
 
 #ifndef ASTROTEMPS_LIBRARY_MODE
 #feature-id Utilities > AstroTemps AutoProcessing Tool
-#feature-info AstroTemps AutoProcessing Tool v1.3.3.<br/>Windows build for PixInsight 1.9.4+ with embedded ImageSolver V8, native SPCC, RC-Astro/SASpro engines, GraXpert integration, StarNet2, interactive NBN, Lighthouse, and interactive Star Stretch.
+#feature-info AstroTemps AutoProcessing Tool v1.3.4.<br/>Windows build for PixInsight 1.9.4+ with embedded ImageSolver V8, native SPCC, RC-Astro/SASpro engines, GraXpert integration, StarNet2, interactive NBN, Lighthouse, and interactive Star Stretch.
 #endif
 CoreApplication.ensureMinimumVersion( 1, 9, 4 );
 
@@ -10609,7 +10609,7 @@ function runCosmicClarityViaSasproCLI( selectedView )
 }
 
 
-var VERSION = "1.3.3";
+var VERSION = "1.3.4";
 
 /*
  * -----------------------------------------------------------------------------
@@ -10666,17 +10666,17 @@ var TAP_I18N_PT_BR = {
    "Run Division pass before Subtract": "Executar Division antes de Subtract",
    "Smoothing:": "Suavização:",
    "Run SPCC": "Executar SPCC",
-   "Run Sharpening": "Executar Sharpening",
+   "Run Sharpening": "Executar Nitidez",
    "Run Noise Reduction": "Executar Redução de Ruído",
    "Run Star Removal": "Executar Remoção de Estrelas",
    "Run Find and Neutralize Background": "Executar Find and Neutralize Background",
    "Run Image Stretch": "Executar Stretch da Imagem",
-   "Run Narrowband Normalization": "Executar Narrowband Normalization",
-   "Run Range Selection and HDR": "Executar Range Selection e HDR",
+   "Run Narrowband Normalization": "Executar Normalização de Banda Estreita",
+   "Run Range Selection and HDR": "Executar Seleção de Faixa e HDR",
    "Run Masks and Curves": "Executar Máscaras e Curvas",
    "Run Lighthouse": "Executar Lighthouse",
-   "Run Dark Structure Enhance": "Executar Dark Structure Enhance",
-   "Run Star Stretch": "Executar Star Stretch",
+   "Run Dark Structure Enhance": "Executar Realce de Estruturas Escuras",
+   "Run Star Stretch": "Executar Stretch de Estrelas",
    "Blend Image + Stars": "Combinar Imagem + Estrelas",
    "Reset": "Redefinir",
    "Reset All": "Redefinir Tudo",
@@ -10701,7 +10701,7 @@ var TAP_I18N_PT_BR = {
    "Reset Selection": "Redefinir Seleção",
    "Skip NBN": "Pular NBN",
    "Skip HDR": "Pular HDR",
-   "Skip Star Stretch": "Pular Star Stretch",
+   "Skip Star Stretch": "Pular Stretch de Estrelas",
    "Skip This Mask": "Pular Esta Máscara",
    "Skip Remaining Masks": "Pular Máscaras Restantes",
    "Create Masks && Start": "Criar Máscaras && Iniciar",
@@ -10775,22 +10775,22 @@ var TAP_I18N_PT_BR = {
    "1. Optical Correction": "1. Correção Óptica",
    "2. Automatic DBE": "2. Automatic DBE",
    "3. SPCC": "3. SPCC",
-   "4. Sharpening": "4. Sharpening",
+   "4. Sharpening": "4. Nitidez",
    "5. Noise Reduction": "5. Redução de Ruído",
    "6. Star Removal": "6. Remoção de Estrelas",
    "7. Find and Neutralize Background": "7. Localizar e Neutralizar Fundo",
    "8. Image Stretch": "8. Stretch da Imagem",
-   "9. Narrowband Normalization": "9. Narrowband Normalization",
-   "10. Range Selection and HDR": "10. Range Selection e HDR",
+   "9. Narrowband Normalization": "9. Normalização de Banda Estreita",
+   "10. Range Selection and HDR": "10. Seleção de Faixa e HDR",
    "11. Masks and Curves": "11. Máscaras e Curvas",
    "12. Lighthouse": "12. Lighthouse",
-   "13. Dark Structure Enhance": "13. Dark Structure Enhance",
-   "14. Star Stretch": "14. Star Stretch",
+   "13. Dark Structure Enhance": "13. Realce de Estruturas Escuras",
+   "14. Star Stretch": "14. Stretch de Estrelas",
    "15. Blend Image + Stars": "15. Combinar Imagem + Estrelas",
-   "Range Selection and HDR — RangeSelection": "Range Selection e HDR — RangeSelection",
+   "Range Selection and HDR — RangeSelection": "Seleção de Faixa e HDR — RangeSelection",
    "Masks and Curves": "Máscaras e Curvas",
    "Find Background - Custom": "Find Background - Área Personalizada",
-   "Narrowband Normalization - Interactive Preview": "Narrowband Normalization - Prévia Interativa"
+   "Narrowband Normalization - Interactive Preview": "Normalização de Banda Estreita - Prévia Interativa"
 };
 
 var TAP_I18N_PT_BR_REPLACEMENTS = [
@@ -10845,6 +10845,16 @@ var TAP_I18N_PT_BR_REPLACEMENTS = [
 ];
 
 var TAP_I18N_PT_BR_EXTRA = {
+
+   "Sharpening": "Nitidez",
+   "Narrowband Normalization": "Normalização de Banda Estreita",
+   "Range Selection": "Seleção de Faixa",
+   "Range Selection and HDR": "Seleção de Faixa e HDR",
+   "Dark Structure Enhance": "Realce de Estruturas Escuras",
+   "Star Stretch": "Stretch de Estrelas",
+   "Skip Range Selection and HDR": "Pular Seleção de Faixa e HDR",
+   "Applying Narrowband Normalization to": "Aplicando Normalização de Banda Estreita em",
+
    "Select files": "Selecionar arquivos",
    "Select Star Database Path": "Selecionar caminho do banco de estrelas",
    "Find Background - Custom Search Area": "Find Background - Área de Busca Personalizada",
@@ -11446,6 +11456,99 @@ function defaultSettings()
       // 15. Blend Image + Stars
       screenStars: true
    };
+}
+
+var TAP_FULL_LAST_SETTINGS_KEY = "AstroTemps/FullLastSettingsJSON";
+
+function TAP_hasInstanceSettings()
+{
+   // Process Icons / saved script instances created by AstroTemps always
+   // contain these core keys. When present, instance Parameters take priority
+   // over the automatically persisted last-used Full settings.
+   return Parameters.has( "createCopy" ) ||
+          Parameters.has( "blurCorrect" ) ||
+          Parameters.has( "spcc" ) ||
+          Parameters.has( "screenStars" );
+}
+
+function TAP_loadPersistentSettings()
+{
+   var s = defaultSettings();
+
+   try
+   {
+      var raw = Settings.read( TAP_FULL_LAST_SETTINGS_KEY, DataType_UCString );
+      if ( raw == null || String( raw ).length == 0 )
+         return s;
+
+      var saved = JSON.parse( String( raw ) );
+      if ( saved == null || typeof saved != "object" )
+         return s;
+
+      for ( var k in s )
+      {
+         if ( saved[k] === undefined )
+            continue;
+
+         if ( k == "executionOrder" )
+         {
+            if ( saved[k] instanceof Array )
+               s.executionOrder = TAP_normalizeExecutionOrder( saved[k] );
+            continue;
+         }
+
+         if ( typeof saved[k] == typeof s[k] )
+            s[k] = saved[k];
+      }
+   }
+   catch ( e )
+   {
+      // Corrupt or obsolete persisted data must never prevent the script from
+      // opening. Factory defaults remain the safe fallback.
+      return defaultSettings();
+   }
+
+   s.executionOrder = TAP_normalizeExecutionOrder( s.executionOrder );
+
+   if ( !isFinite( s.sharpenStars ) )
+      s.sharpenStars = 0.35;
+   s.sharpenStars = clampValue( s.sharpenStars, 0.0, 0.70 );
+
+   return s;
+}
+
+function TAP_savePersistentSettings( s )
+{
+   if ( s == null )
+      return;
+
+   try
+   {
+      var defaults = defaultSettings();
+      var saved = {};
+
+      for ( var k in defaults )
+      {
+         if ( k == "executionOrder" )
+            saved[k] = TAP_normalizeExecutionOrder( s[k] ).slice( 0 );
+         else if ( s[k] !== undefined && typeof s[k] == typeof defaults[k] )
+            saved[k] = s[k];
+         else
+            saved[k] = defaults[k];
+      }
+
+      Settings.write(
+         TAP_FULL_LAST_SETTINGS_KEY,
+         DataType_UCString,
+         JSON.stringify( saved )
+      );
+   }
+   catch ( e ) {}
+}
+
+function TAP_clearPersistentSettings()
+{
+   try { Settings.remove( TAP_FULL_LAST_SETTINGS_KEY ); } catch ( e ) {}
 }
 
 function saveSettingsToParameters( s )
@@ -30036,7 +30139,7 @@ function AstroTempsAutoProcessingDialog_init( initialSettings )
    // 1. Optical Correction
    // -----------------------------------------------------------------
    this.preprocess_Section = this.registerSection(
-      new TAP_CollapsibleSection( this, "1. Optical Correction", true, initialSettings.blurCorrect )
+      new TAP_CollapsibleSection( this, "1. Optical Correction", false, initialSettings.blurCorrect )
    );
    var p1 = this.preprocess_Section.body;
 
@@ -31897,7 +32000,9 @@ function AstroTempsAutoProcessingDialog_init( initialSettings )
       TAP_TR_UI( "<p>Create a reusable Process Icon / script instance with the current settings.</p>" );
    this.newInstance_Button.onMousePress = function()
    {
-      saveSettingsToParameters( dialog.getSettings() );
+      var s = dialog.getSettings();
+      TAP_savePersistentSettings( s );
+      saveSettingsToParameters( s );
       dialog.newInstance();
    };
 
@@ -32372,7 +32477,9 @@ function main()
       return;
    }
 
-   var initialSettings = loadSettingsFromParameters();
+   var initialSettings = TAP_hasInstanceSettings() ?
+      loadSettingsFromParameters() :
+      TAP_loadPersistentSettings();
    // Dragging a saved script instance onto a view executes immediately.
    if ( Parameters.isViewTarget )
    {
@@ -32400,23 +32507,41 @@ function main()
       var dialog = new AstroTempsAutoProcessingDialog( currentSettings );
       var accepted = dialog.execute();
 
+      var dialogSettings = null;
+      if ( !dialog.resetRequested )
+      {
+         try { dialogSettings = dialog.getSettings(); } catch ( eDialogSettings ) {}
+      }
+
       if ( dialog.languageChanged )
       {
-         try { currentSettings = dialog.getSettings(); } catch ( eLanguageSettings ) {}
+         if ( dialogSettings != null )
+         {
+            currentSettings = dialogSettings;
+            TAP_savePersistentSettings( dialogSettings );
+         }
          continue;
       }
 
       if ( dialog.resetRequested )
       {
+         TAP_clearPersistentSettings();
          currentSettings = defaultSettings();
          continue;
       }
 
+      // "Close" and the window close button act like a saved preset close:
+      // retain the current Full configuration without starting processing.
       if ( !accepted )
+      {
+         if ( dialogSettings != null )
+            TAP_savePersistentSettings( dialogSettings );
          return;
+      }
 
       var target = dialog.target_ViewList.currentView;
-      var settings = dialog.getSettings();
+      var settings = dialogSettings != null ? dialogSettings : dialog.getSettings();
+      TAP_savePersistentSettings( settings );
       saveSettingsToParameters( settings );
       executeWithErrorHandling( target, settings );
       return;
