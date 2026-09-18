@@ -4,7 +4,7 @@
       <p>AstroTemps AutoProcessing Tool macOS repository by Felipe Temponi.</p>
    </description>
    <platform os="all" arch="noarch" version="1.9.4:1.9.99">
-      <package fileName="AstroTemps-macOS-v1.3.5.zip" sha1="45366884858af9c04b2db7dea48f3f49cd78ca66" type="script" releaseDate="20260918">
+      <package fileName="AstroTemps-macOS-v1.3.5.zip" sha1="3396c3c3135c6e68886e916ade8f3d6004c2ad1f" type="script" releaseDate="20260918">
          <title>AstroTemps AutoProcessing Tool v1.3.5 - macOS</title>
          <description>
             <p>macOS build of AstroTemps AutoProcessing Tool and AstroTemps Redux for PixInsight 1.9.4.</p>
