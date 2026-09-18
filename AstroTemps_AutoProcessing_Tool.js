@@ -10863,12 +10863,10 @@ var TAP_I18N_PT_BR_REPLACEMENTS = [
    [ "automatically removes the mask reference.", "remove automaticamente a referência da máscara." ],
    [ "one masked CurvesTransformation editor at a time.", "um editor CurvesTransformation com máscara por vez." ],
    [ "Temporary reduced preview of", "Prévia temporária reduzida de" ],
-   [ "with", "com" ],
    [ "linked.", "vinculada." ],
    [ "Apply the current settings", "Aplicar as configurações atuais" ],
    [ "and continue", "e continuar" ],
    [ "and resumes the workflow.", "e retoma o workflow." ],
-   [ "Select", "Selecionar" ],
    [ "Optional", "Opcional" ]
 ];
 
