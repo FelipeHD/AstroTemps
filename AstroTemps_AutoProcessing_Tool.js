@@ -1,7 +1,7 @@
 /*
  * =====================================================================
  * AstroTemps AutoProcessing Tool 
- * Version 1.3.1 - Windows
+ * Version 1.3.1 - macOS
  * PixInsight / PJSR
  *
  * Workflow:
@@ -43,7 +43,7 @@
  * Portability note:
  * The workflow avoids user-specific filesystem paths. PixInsight standard
  * For release stability, ImageSolver support files are loaded from the
- * standard Windows PixInsight installation tree.
+ * standard PixInsight installation tree on macOS.
  * Third-party engines must be installed by each user. BlurXTerminator,
  * NoiseXTerminator, StarXTerminator, StarNet2 and SPCC are instantiated directly
  * from their installed PixInsight processes; Workspace Process Icons are not
@@ -72,7 +72,7 @@
 
 #ifndef ASTROTEMPS_LIBRARY_MODE
 #feature-id Utilities > AstroTemps AutoProcessing Tool
-#feature-info AstroTemps AutoProcessing Tool v1.3.1.<br/>Windows build for PixInsight 1.9.4+ with embedded ImageSolver V8, native SPCC, RC-Astro/SASpro engines, GraXpert integration, StarNet2, interactive NBN, Lighthouse, and interactive Star Stretch.
+#feature-info AstroTemps AutoProcessing Tool v1.3.1.<br/>macOS build for PixInsight 1.9.4 with embedded ImageSolver V8, native SPCC, RC-Astro/SASpro engines, GraXpert integration, StarNet2, interactive NBN, Lighthouse, and interactive Star Stretch.
 #endif
 CoreApplication.ensureMinimumVersion( 1, 9, 4 );
 
@@ -106,8 +106,8 @@ CoreApplication.ensureMinimumVersion( 1, 9, 4 );
 #define SETTINGS_MODULE "SOLVER"
 #define STAR_CSV_FILE (File.systemTempDirectory + format( "/stars-%03d.csv", CoreApplication.instance ))
 
-#include "C:/Program Files/PixInsight/src/scripts/AdP/WCSmetadata.jsh"
-#include "C:/Program Files/PixInsight/src/scripts/AdP/AstronomicalCatalogs.jsh"
+#include "../AdP/WCSmetadata.jsh"
+#include "../AdP/AstronomicalCatalogs.jsh"
 
 #define USE_SOLVER_LIBRARY
 /* ---- Embedded TAP_ImageSolverV8_Fix5.js ---- */
@@ -4097,11 +4097,11 @@ function ImageSolver()
 
 function main()
 {
-   if ( typeof IS_WIN != "undefined" && !IS_WIN )
+   if ( typeof IS_MAC != "undefined" && !IS_MAC )
    {
       ( new MessageBox(
-         "This is the Windows build of AstroTemps AutoProcessing Tool.\n\n" +
-         "Use the macOS build on Apple systems.",
+         "This is the macOS build of AstroTemps AutoProcessing Tool.\n\n" +
+         "Use this build on Apple systems running macOS.",
          "AstroTemps AutoProcessing Tool",
          StdIcon_Error,
          StdButton_Ok
@@ -9623,6 +9623,23 @@ function TAP_sasproSavedExecutable()
    return p;
 }
 
+function TAP_resolveMacAppExecutable( path, binaryName )
+{
+   path = TAP_safeString( path );
+   if ( !IS_MAC || path.length == 0 )
+      return path;
+
+   if ( /\.app\/?$/i.test( path ) )
+   {
+      path = path.replace( /\/$/, "" );
+      var candidate = path + "/Contents/MacOS/" + binaryName;
+      if ( _cc_fileExistsSafe( candidate ) )
+         return candidate;
+   }
+
+   return path;
+}
+
 function TAP_saveSASproExecutable( path )
 {
    path = TAP_safeString( path );
@@ -9643,7 +9660,7 @@ function TAP_saveSASproExecutable( path )
 function TAP_promptForSASproExecutable()
 {
    var ofd = new OpenFileDialog;
-   ofd.caption = "Select SetiAstroSuitePro Windows Executable";
+   ofd.caption = "Select SetiAstroSuitePro macOS Executable";
    ofd.multipleSelections = false;
 
    var saved = TAP_sasproSavedExecutable();
@@ -9657,7 +9674,7 @@ function TAP_promptForSASproExecutable()
    if ( !ofd.execute() || !ofd.fileNames || ofd.fileNames.length < 1 )
       return "";
 
-   var p = TAP_safeString( ofd.fileNames[0] );
+   var p = TAP_resolveMacAppExecutable( TAP_safeString( ofd.fileNames[0] ), "SetiAstroSuitePro" );
    TAP_saveSASproExecutable( p );
    return p;
 }
@@ -10436,11 +10453,20 @@ function TAP_findKnownSASproExecutable()
     try
     {
         var home = TAP_safeString( File.homeDirectory );
-        var c = [
-            home + "/AppData/Local/Programs/SetiAstroSuitePro/SetiAstroSuitePro.exe",
-            home + "/AppData/Local/SetiAstroSuitePro/SetiAstroSuitePro.exe",
-            "C:/Program Files/SetiAstroSuitePro/SetiAstroSuitePro.exe"
-        ];
+        var c = [];
+
+        if ( IS_MAC )
+        {
+            c.push( "/Applications/SetiAstroSuitePro.app/Contents/MacOS/SetiAstroSuitePro" );
+            if ( home.length > 0 )
+               c.push( home + "/Applications/SetiAstroSuitePro.app/Contents/MacOS/SetiAstroSuitePro" );
+        }
+        else if ( IS_WIN )
+        {
+            c.push( home + "/AppData/Local/Programs/SetiAstroSuitePro/SetiAstroSuitePro.exe" );
+            c.push( home + "/AppData/Local/SetiAstroSuitePro/SetiAstroSuitePro.exe" );
+            c.push( "C:/Program Files/SetiAstroSuitePro/SetiAstroSuitePro.exe" );
+        }
 
         for ( var i = 0; i < c.length; ++i )
             if ( _cc_fileExistsSafe( c[i] ) )
@@ -11850,6 +11876,7 @@ function TAP_spccDatabaseCandidatePaths()
    // a warning at script load time. Fall back to common installation paths.
    paths.push( "C:/Program Files/PixInsight/library/filters.xspd" );
    paths.push( "C:/Program Files (x86)/PixInsight/library/filters.xspd" );
+   paths.push( "/Applications/PixInsight/library/filters.xspd" );
    paths.push( "/Applications/PixInsight/PixInsight.app/Contents/Resources/library/filters.xspd" );
    paths.push( "/Applications/PixInsight/PixInsight.app/Contents/library/filters.xspd" );
    paths.push( "/opt/PixInsight/library/filters.xspd" );
@@ -12702,33 +12729,43 @@ function TAP_graxpertCandidateExecutables()
    var home = "";
    try { home = String( File.homeDirectory ); } catch ( e0 ) {}
 
-   var common = [
-      "C:/Program Files/GraXpert/GraXpert.exe",
-      "C:/Program Files/GraXpert/GraXpert-win64.exe",
-      "C:/Program Files/GraXpert/bin/GraXpert.exe"
-   ];
+   var common = [];
 
-   if ( home.length > 0 )
+   if ( IS_MAC )
    {
-      common.push( home + "/AppData/Local/Programs/GraXpert/GraXpert.exe" );
-      common.push( home + "/AppData/Local/GraXpert/GraXpert.exe" );
+      common.push( "/Applications/GraXpert.app/Contents/MacOS/GraXpert" );
+      if ( home.length > 0 )
+         common.push( home + "/Applications/GraXpert.app/Contents/MacOS/GraXpert" );
+   }
+   else if ( IS_WIN )
+   {
+      common.push( "C:/Program Files/GraXpert/GraXpert.exe" );
+      common.push( "C:/Program Files/GraXpert/GraXpert-win64.exe" );
+      common.push( "C:/Program Files/GraXpert/bin/GraXpert.exe" );
+
+      if ( home.length > 0 )
+      {
+         common.push( home + "/AppData/Local/Programs/GraXpert/GraXpert.exe" );
+         common.push( home + "/AppData/Local/GraXpert/GraXpert.exe" );
+      }
    }
 
    for ( var i = 0; i < common.length; ++i )
       if ( _cc_fileExistsSafe( common[i] ) )
          c.push( common[i] );
 
-   // Current installations may expose one of these commands through PATH.
+   // Current installations may expose GraXpert through PATH.
    c.push( "graxpert" );
-   c.push( "GraXpert-win64.exe" );
+   if ( IS_MAC ) c.push( "GraXpert" );
+   if ( IS_WIN ) c.push( "GraXpert-win64.exe" );
 
-   // Canonicalize duplicates without relying on case-sensitive Windows paths.
+   // Canonicalize duplicates.
    var out = [];
    var seen = {};
    for ( var j = 0; j < c.length; ++j )
    {
       var p = TAP_safeString( c[j] );
-      var key = p.toLowerCase();
+      var key = IS_WIN ? p.toLowerCase() : p;
       if ( p.length > 0 && !seen[key] )
       {
          seen[key] = true;
@@ -12741,7 +12778,7 @@ function TAP_graxpertCandidateExecutables()
 function TAP_promptForGraXpertExecutable()
 {
    var ofd = new OpenFileDialog;
-   ofd.caption = "Select GraXpert Windows Executable";
+   ofd.caption = "Select GraXpert macOS Application or Executable";
    ofd.multipleSelections = false;
 
    var saved = TAP_graxpertSavedExecutable();
@@ -12755,7 +12792,7 @@ function TAP_promptForGraXpertExecutable()
    if ( !ofd.execute() || !ofd.fileNames || ofd.fileNames.length < 1 )
       return "";
 
-   var p = String( ofd.fileNames[0] );
+   var p = TAP_resolveMacAppExecutable( String( ofd.fileNames[0] ), "GraXpert" );
    TAP_saveGraXpertExecutable( p );
    return p;
 }
@@ -12881,7 +12918,7 @@ function TAP_runGraXpertCLI( args, expectedOutput )
       if ( chosen.length == 0 )
          throw new Error(
             "GraXpert executable was not found automatically. " +
-            "Install GraXpert or select its Windows executable when prompted."
+            "Install GraXpert or select its macOS application/executable when prompted."
          );
 
       var rr = runExternalProcessBlocking( chosen, args, {} );
@@ -31804,10 +31841,10 @@ function executeWithErrorHandling( target, settings )
 
 function main()
 {
-   if ( !IS_WIN )
+   if ( !IS_MAC )
    {
       ( new MessageBox(
-         "This is the Windows build of AstroTemps AutoProcessing Tool.\n\nUse the macOS build on Apple systems.",
+         "This is the macOS build of AstroTemps AutoProcessing Tool.\n\nUse this build on Apple systems running macOS.",
          "AstroTemps AutoProcessing Tool",
          StdIcon_Error,
          StdButton_Ok
