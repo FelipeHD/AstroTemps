@@ -1,7 +1,7 @@
 /*
  * =====================================================================
  * AstroTemps AutoProcessing Tool 
- * Version 1.3.4 - Windows
+ * Version 1.3.5 - Windows
  * PixInsight / PJSR
  *
  * Workflow:
@@ -72,7 +72,7 @@
 
 #ifndef ASTROTEMPS_LIBRARY_MODE
 #feature-id Utilities > AstroTemps AutoProcessing Tool
-#feature-info AstroTemps AutoProcessing Tool v1.3.4.<br/>Windows build for PixInsight 1.9.4+ with embedded ImageSolver V8, native SPCC, RC-Astro/SASpro engines, GraXpert integration, StarNet2, interactive NBN, Lighthouse, and interactive Star Stretch.
+#feature-info AstroTemps AutoProcessing Tool v1.3.5.<br/>Windows build for PixInsight 1.9.4+ with embedded ImageSolver V8, native SPCC, RC-Astro/SASpro engines, GraXpert integration, StarNet2, interactive NBN, Lighthouse, and interactive Star Stretch.
 #endif
 CoreApplication.ensureMinimumVersion( 1, 9, 4 );
 
@@ -7344,7 +7344,7 @@ function TAPSTAR_previewZoomIndexFromFactor( factor )
 function TAPSTAR_NBtoRGBDialog_init( starsView, s )
 {
    var self = this;
-   this.windowTitle = TAP_TR_UI( "SetiAstro's NB to RGB Stars - FT-Astro" );
+   this.windowTitle = TAP_TR_UI( "SetiAstro's NB to RGB Stars - AstroTemps" );
    this.applied = false;
    this.skipped = false;
    this.resultView = null;
@@ -10609,7 +10609,7 @@ function runCosmicClarityViaSasproCLI( selectedView )
 }
 
 
-var VERSION = "1.3.4";
+var VERSION = "1.3.5";
 
 /*
  * -----------------------------------------------------------------------------
@@ -10686,10 +10686,10 @@ var TAP_I18N_PT_BR = {
    "Cancel": "Cancelar",
    "Continue": "Continuar",
    "Apply & Continue": "Aplicar e Continuar",
-   "Apply && Continue": "Aplicar && Continuar",
+   "Apply && Continue": "Aplicar e Continuar",
    "Execute & Continue": "Executar e Continuar",
-   "Execute && Continue": "Executar && Continuar",
-   "Cancel Workflow": "Cancelar Workflow",
+   "Execute && Continue": "Executar e Continuar",
+   "Cancel Workflow": "Cancelar Processamento",
    "Show Preview": "Mostrar Prévia",
    "Refresh Preview": "Atualizar Prévia",
    "Preview": "Prévia",
@@ -10704,8 +10704,8 @@ var TAP_I18N_PT_BR = {
    "Skip Star Stretch": "Pular Stretch de Estrelas",
    "Skip This Mask": "Pular Esta Máscara",
    "Skip Remaining Masks": "Pular Máscaras Restantes",
-   "Create Masks && Start": "Criar Máscaras && Iniciar",
-   "Create Mask && Continue": "Criar Máscara && Continuar",
+   "Create Masks && Start": "Criar Máscaras e Iniciar",
+   "Create Mask && Continue": "Criar Máscara e Continuar",
    "Create Mask && Continue": "Criar Máscara && Continuar",
    "Create Mask & Continue": "Criar Máscara e Continuar",
    "Create Masks & Start": "Criar Máscaras e Iniciar",
@@ -10828,10 +10828,25 @@ var TAP_I18N_PT_BR_REPLACEMENTS = [
    [ "Updating preview...", "Atualizando prévia..." ],
    [ "Could not generate the", "Não foi possível gerar" ],
    [ "preview failed.", "falha na prévia." ],
+   [ "<b>Masks and Curves</b>", "<b>Máscaras e Curvas</b>" ],
+   [ "AstroTemps will create RedMask, YellowMask, GreenMask, CyanMask, BlueMask and MagentaMask from the supplied PixelMath equations, ",
+     "O AstroTemps criará RedMask, YellowMask, GreenMask, CyanMask, BlueMask e MagentaMask a partir das equações PixelMath fornecidas, " ],
+   [ "run MaskBlur three times on each mask, and then open one masked CurvesTransformation editor at a time.",
+     "executará MaskBlur três vezes em cada máscara e, em seguida, abrirá um editor CurvesTransformation com máscara por vez." ],
+   [ "<b>Range Selection and HDR — RangeSelection</b>", "<b>Seleção de Faixa e HDR — RangeSelection</b>" ],
+   [ "Adjust the luminosity-mask parameters below.",
+     "Ajuste abaixo os parâmetros da máscara de luminosidade." ],
+   [ "A temporary range-mask window is refreshed automatically; <b>Create Mask & Continue</b> generates the full-resolution mask and links it to _work.",
+     "Uma janela temporária da máscara de seleção de faixa é atualizada automaticamente; <b>Criar Máscara e Continuar</b> gera a máscara em resolução total e a vincula à imagem _work." ],
+   [ "OSC dual-band stars-only image:", "Imagem OSC de banda dupla contendo apenas estrelas:" ],
+   [ "Adjust the Ha/OIII balance and SetiAstro star stretch visually.",
+     "Ajuste visualmente o balanço Ha/OIII e o stretch de estrelas do SetiAstro." ],
+   [ "The preview is temporary; <b>Execute & Continue</b> creates NBtoRGB_stars and resumes the workflow.",
+     "A prévia é temporária; <b>Executar e Continuar</b> cria NBtoRGB_stars e retoma o fluxo de processamento." ],
    [ "Target:", "Alvo:" ],
    [ "Select the image to process.", "Selecione a imagem a processar." ],
-   [ "Skip Range Selection and HDR", "Pular Range Selection e HDR" ],
-   [ "Skip Masks && Curves", "Pular Máscaras && Curvas" ],
+   [ "Skip Range Selection and HDR", "Pular Seleção de Faixa e HDR" ],
+   [ "Skip Masks && Curves", "Pular Máscaras e Curvas" ],
    [ "Continue the workflow without", "Continuar o workflow sem" ],
    [ "Executing this panel applies", "A execução deste painel aplica" ],
    [ "automatically removes the mask reference.", "remove automaticamente a referência da máscara." ],
@@ -10845,6 +10860,8 @@ var TAP_I18N_PT_BR_REPLACEMENTS = [
 ];
 
 var TAP_I18N_PT_BR_EXTRA = {
+   "Color Boost Amount:": "Reforço de Cor:",
+   "SetiAstro's NB to RGB Stars - AstroTemps": "SetiAstro's NB to RGB Stars - AstroTemps",
 
    "Sharpening": "Nitidez",
    "Narrowband Normalization": "Normalização de Banda Estreita",
