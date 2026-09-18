@@ -1,7 +1,7 @@
 /*
  * =====================================================================
  * AstroTemps AutoProcessing Tool 
- * Version 1.3.2 - Windows
+ * Version 1.3.3 - Windows
  * PixInsight / PJSR
  *
  * Workflow:
@@ -72,7 +72,7 @@
 
 #ifndef ASTROTEMPS_LIBRARY_MODE
 #feature-id Utilities > AstroTemps AutoProcessing Tool
-#feature-info AstroTemps AutoProcessing Tool v1.3.2.<br/>Windows build for PixInsight 1.9.4+ with embedded ImageSolver V8, native SPCC, RC-Astro/SASpro engines, GraXpert integration, StarNet2, interactive NBN, Lighthouse, and interactive Star Stretch.
+#feature-info AstroTemps AutoProcessing Tool v1.3.3.<br/>Windows build for PixInsight 1.9.4+ with embedded ImageSolver V8, native SPCC, RC-Astro/SASpro engines, GraXpert integration, StarNet2, interactive NBN, Lighthouse, and interactive Star Stretch.
 #endif
 CoreApplication.ensureMinimumVersion( 1, 9, 4 );
 
@@ -10609,7 +10609,7 @@ function runCosmicClarityViaSasproCLI( selectedView )
 }
 
 
-var VERSION = "1.3.2";
+var VERSION = "1.3.3";
 
 /*
  * -----------------------------------------------------------------------------
@@ -10844,6 +10844,237 @@ var TAP_I18N_PT_BR_REPLACEMENTS = [
    [ "Optional", "Opcional" ]
 ];
 
+var TAP_I18N_PT_BR_EXTRA = {
+   "Select files": "Selecionar arquivos",
+   "Select Star Database Path": "Selecionar caminho do banco de estrelas",
+   "Find Background - Custom Search Area": "Find Background - Área de Busca Personalizada",
+   "Select SetiAstroSuitePro Windows Executable": "Selecionar executável do SetiAstroSuitePro para Windows",
+   "Select SetiAstroSuitePro Linux Executable": "Selecionar executável do SetiAstroSuitePro para Linux",
+   "Select GraXpert Windows Executable": "Selecionar executável do GraXpert para Windows",
+   "Preparing live NBN preview...": "Preparando prévia em tempo real do NBN...",
+   "OIII boost:": "Reforço de OIII:",
+   "SII boost:": "Reforço de SII:",
+   "Midtones Balance:": "Balanço de Meios-Tons:",
+   "Midtones balance:": "Balanço de meios-tons:",
+   "Execute HDR && Continue": "Executar HDR && Continuar",
+   "Masks and Curves - AstroTemps": "Máscaras e Curvas - AstroTemps",
+   "Point: -": "Ponto: -",
+   "<b>Masked Preview</b>": "<b>Prévia com Máscara</b>",
+   "Select watermark image": "Selecionar imagem da marca d'água",
+   "<p>Double-click to reset this slider.</p>": "<p>Clique duas vezes para redefinir este controle.</p>",
+   "Clipping preview - blown highlights (release to exit)": "Prévia de clipping - realces estourados (solte para sair)",
+   "Clipping preview - crushed shadows (release to exit)": "Prévia de clipping - sombras esmagadas (solte para sair)",
+   "Temp": "Temperatura",
+   "Tint": "Matiz",
+   "HL Recovery": "Recuperação de Realces",
+   "SC Protection": "Proteção de Núcleos Estelares",
+   "Clarity": "Clareza",
+   "Clarity Radius": "Raio de Clareza",
+   "Dehaze": "Remover Névoa",
+   "Midtone Contrast": "Contraste de Meios-Tons",
+   "SCNR Green": "SCNR Verde",
+   "Inverse - Magenta Removal": "Inverso - Remoção de Magenta",
+   "Low": "Baixo",
+   "Medium": "Médio",
+   "High": "Alto",
+   "Enable luminosity mask": "Ativar máscara de luminosidade",
+   "Strength": "Intensidade",
+   "Show mask in preview": "Mostrar máscara na prévia",
+   "Show mask only (grayscale)": "Mostrar somente a máscara (tons de cinza)",
+   "Add region": "Adicionar região",
+   "Add region cancelled.": "Adição de região cancelada.",
+   "Add region: drag an ellipse (Alt = circle from center, Ctrl = rotate while drawing).": "Adicionar região: arraste uma elipse (Alt = círculo a partir do centro, Ctrl = girar durante o desenho).",
+   "Remove": "Remover",
+   "Region removed.": "Região removida.",
+   "Clear": "Limpar",
+   "Regions cleared.": "Regiões removidas.",
+   "Hide ants": "Ocultar contornos",
+   "Show ants": "Mostrar contornos",
+   "Sel. feather": "Suavização da seleção",
+   "Region strength": "Intensidade da região",
+   "White mask (ignore luminosity mask)": "Máscara branca (ignorar máscara de luminosidade)",
+   "Invert (mask outside all regions)": "Inverter (mascarar fora de todas as regiões)",
+   "Export mask": "Exportar máscara",
+   "Nothing to export - enable the luminosity mask (Strength > 0) first.": "Nada para exportar - ative primeiro a máscara de luminosidade (Intensidade > 0).",
+   "Luminance": "Luminância",
+   "Detail": "Detalhe",
+   "Color": "Cor",
+   "Show preview": "Mostrar prévia",
+   "Fast preview (slow CPUs)": "Prévia rápida (CPUs lentas)",
+   "Full-res preview": "Prévia em resolução total",
+   "Monitor profile:": "Perfil do monitor:",
+   "Create new image": "Criar nova imagem",
+   "Applied. Continuing on updated image.": "Aplicado. Continuando na imagem atualizada.",
+   "Apply": "Aplicar",
+   "Ready": "Pronto",
+   "Histogram": "Histograma",
+   "One tool box open at a time": "Uma ferramenta aberta por vez",
+   "White balance: that point is too dark - pick a brighter grey.": "Balanço de branco: esse ponto está escuro demais - escolha um cinza mais claro.",
+   "Auto WB: no image loaded.": "WB Automático: nenhuma imagem carregada.",
+   "Auto WB: couldn't find a neutral region - try the Picker.": "WB Automático: não foi possível encontrar uma região neutra - tente o Seletor.",
+   "Auto white balance applied - fine-tune with Temp / Tint or the Picker.": "Balanço de branco automático aplicado - refine com Temperatura / Matiz ou com o Seletor.",
+   "Auto WB": "WB Automático",
+   "Picker": "Seletor",
+   "White balance picker cancelled.": "Seletor de balanço de branco cancelado.",
+   "White balance: click a neutral point in the preview.": "Balanço de branco: clique em um ponto neutro na prévia.",
+   "Click, then click a neutral point": "Clique e depois selecione um ponto neutro",
+   "Changes the AstroTemps interface language. Process Console output remains in English.": "Altera o idioma da interface do AstroTemps. A saída do Process Console permanece em inglês.",
+   "ML Version:": "Versão de ML:",
+   "Latest (automatic)": "Mais recente (automático)",
+   "Sharpen Stars:": "Nitidez das Estrelas:",
+   "Adjust Star Halos:": "Ajustar Halos das Estrelas:",
+   "Automatic PSF": "PSF Automático",
+   "PSF Diameter (pixels):": "Diâmetro do PSF (pixels):",
+   "Sharpen Nonstellar:": "Nitidez Não Estelar:",
+   "Tile Overlap:": "Sobreposição dos blocos:",
+   "Sharpening Mode:": "Modo de Nitidez:",
+   "Stellar Amount:": "Intensidade Estelar:",
+   "Non-Stellar Feature Size (PSF):": "Tamanho das Estruturas Não Estelares (PSF):",
+   "Non-Stellar Amount:": "Intensidade Não Estelar:",
+   "Auto PSF": "PSF Automático",
+   "Sharpen RGB Channels Separately": "Aplicar nitidez aos canais RGB separadamente",
+   "Enable GPU Acceleration": "Ativar aceleração por GPU",
+   "Temporarily Stretch Linear Images Before AI Processing": "Aplicar Stretch temporário em imagens lineares antes do processamento por IA",
+   "Temp Stretch Target Median:": "Mediana-alvo do Stretch temporário:",
+   "Chunk Size:": "Tamanho do bloco:",
+   "Overlap:": "Sobreposição:",
+   "Intensity/Color Separation": "Separação Intensidade/Cor",
+   "Frequency Separation": "Separação por Frequência",
+   "Iterations:": "Iterações:",
+   "Denoise Mode:": "Modo de redução de ruído:",
+   "Denoise RGB Channels Separately": "Reduzir ruído dos canais RGB separadamente",
+   "Denoise Model:": "Modelo de redução de ruído:",
+   "Generate Star Image": "Gerar imagem de estrelas",
+   "Linear data": "Dados lineares",
+   "Protect highlights": "Proteger realces",
+   "Starmask": "Máscara de estrelas",
+   "Run Find Background": "Executar Find Background",
+   "Full Image": "Imagem Completa",
+   "Custom": "Personalizado",
+   "Stretch Method:": "Método de Stretch:",
+   "Target Median:": "Mediana-alvo:",
+   "Blackpoint Sigma:": "Sigma do ponto preto:",
+   "No Black Clip": "Sem clipping do preto",
+   "HDR Compress (SASpro style)": "Compressão HDR (estilo SASpro)",
+   "HDR Amount:": "Intensidade HDR:",
+   "HDR Knee:": "Knee do HDR:",
+   "Luma Only (preserve color)": "Somente luminância (preservar cor)",
+   "Luma Mode:": "Modo de luminância:",
+   "Luma Blend:": "Mistura de luminância:",
+   "Normalize Image Range to [0,1]": "Normalizar faixa da imagem para [0,1]",
+   "Linked Stretch": "Stretch Vinculado",
+   "Curves Boost:": "Reforço de Curvas:",
+   "Layers to remove:": "Camadas a remover:",
+   "Extract mask": "Extrair máscara",
+   "Amount:": "Intensidade:",
+   "Run Blend Image + Stars": "Executar Combinar Imagem + Estrelas",
+   "Informations": "Informações",
+   "About the Project": "Sobre o Projeto",
+   "Run Processing": "Executar Processamento",
+   "Default": "Padrão",
+   "Sharpen": "Nitidez",
+   "Denoise": "Redução de Ruído",
+   "Reduce dark halos (deringing)": "Reduzir halos escuros (deringing)",
+   "Relative": "Relativo",
+   "Absolute": "Absoluto",
+   "Colors": "Cores",
+   "Method": "Método",
+   "Cyan": "Ciano",
+   "Yellow": "Amarelo",
+   "Black": "Preto",
+   "Range": "Intervalo",
+   "Protect shadows": "Proteger sombras",
+   "Smoothness": "Suavização",
+   "Show selection mask": "Mostrar máscara de seleção",
+   "Preserve luminance": "Preservar luminância",
+   "Reset color": "Redefinir cor",
+   "Edited:": "Editado:",
+   "Edited: none": "Editado: nenhum",
+   "Reds": "Vermelhos",
+   "Yellows": "Amarelos",
+   "Greens": "Verdes",
+   "Cyans": "Cianos",
+   "Blues": "Azuis",
+   "Whites": "Brancos",
+   "Neutrals": "Neutros",
+   "Blacks": "Pretos",
+   "Enable watermark": "Ativar marca d'água",
+   "Image": "Imagem",
+   "Text": "Texto",
+   "Content": "Conteúdo",
+   "Load image...": "Carregar imagem...",
+   "(no image loaded)": "(nenhuma imagem carregada)",
+   "Keep aspect ratio": "Manter proporção",
+   "Font": "Fonte",
+   "Bold": "Negrito",
+   "Italic": "Itálico",
+   "Text colour": "Cor do texto",
+   "Blend mode": "Modo de mistura",
+   "Opacity": "Opacidade",
+   "Reset position": "Redefinir posição",
+   "Hide placement box": "Ocultar caixa de posicionamento",
+   "Show placement box": "Mostrar caixa de posicionamento",
+   "Reset channel": "Redefinir canal",
+   "Reset all": "Redefinir tudo",
+   "Channel": "Canal",
+   "Original": "Original",
+   "Outside preview image": "Fora da imagem de prévia",
+   "Zoom in": "Aumentar zoom",
+   "Zoom out": "Reduzir zoom",
+   "Fit preview": "Ajustar prévia",
+   "Fit": "Ajustar",
+   "Full view": "Visualização completa",
+   "Lights": "Claros",
+   "Darks": "Escuros",
+   "Target": "Alvo",
+   "Protect": "Proteger",
+   "Type": "Tipo",
+   "Depth": "Profundidade",
+   "Mode": "Modo",
+   "Auto-detect (recommended)": "Detectar automaticamente (recomendado)",
+   "None (no color management)": "Nenhum (sem gerenciamento de cor)",
+   "Skip Lighthouse": "Pular Lighthouse",
+   "Stellar Only": "Somente Estelar",
+   "Non-Stellar Only": "Somente Não Estelar",
+   "Both": "Ambos",
+   "Full": "Completo",
+   "Luminance Only": "Somente Luminância",
+   "Standard": "Padrão",
+   "Lite (faster)": "Lite (mais rápido)",
+   "Compute Device: <i>Automatic (managed by BlurXTerminator)</i>": "Dispositivo de processamento: <i>Automático (gerenciado pelo BlurXTerminator)</i>",
+   "Compute Device: <i>Automatic (managed by NoiseXTerminator)</i>": "Dispositivo de processamento: <i>Automático (gerenciado pelo NoiseXTerminator)</i>",
+   "Compute Device: <i>Automatic (managed by StarXTerminator)</i>": "Dispositivo de processamento: <i>Automático (gerenciado pelo StarXTerminator)</i>",
+   "<i>BlurXTerminator uses Correct Only with the latest installed ML model. Cosmic Clarity uses its Correct Only preset.</i>": "<i>BlurXTerminator usa o modo Correct Only com o modelo ML mais recente instalado. Cosmic Clarity usa seu preset Correct Only.</i>",
+   "<b>Requirement: SetiAstroSuitePro must be properly installed and configured on this computer for Cosmic Clarity - SASpro to work.</b>": "<b>Requisito: o SetiAstroSuitePro deve estar corretamente instalado e configurado neste computador para o Cosmic Clarity - SASpro funcionar.</b>",
+   "<p>GraXpert Background Extraction smoothing. Range 0.000–1.000; <b>0.000</b> is the default and recommended starting point for AI extraction.</p>": "<p>Suavização do Background Extraction do GraXpert. Faixa 0.000–1.000; <b>0.000</b> é o valor padrão e o ponto inicial recomendado para a extração por IA.</p>",
+   "<i>Unchecked: Subtract only. Checked: Division, then Subtract.<br/>GraXpert uses its AI Background Extraction CLI and latest available AI model.</i>": "<i>Desmarcado: somente Subtract. Marcado: Division e depois Subtract.<br/>O GraXpert usa sua CLI de AI Background Extraction e o modelo de IA mais recente disponível.</i>",
+   "<b>Requirement: GraXpert must be properly installed and configured on this computer for this engine to work.</b>": "<b>Requisito: o GraXpert deve estar corretamente instalado e configurado neste computador para este mecanismo funcionar.</b>",
+   "<i>Before SPCC, the workflow checks for an astrometric solution. If none is found, PixInsight ImageSolver runs automatically using image metadata and your saved solver settings. Calibration graph generation is disabled automatically.</i>": "<i>Antes do SPCC, o workflow verifica se existe uma solução astrométrica. Se nenhuma for encontrada, o PixInsight ImageSolver é executado automaticamente usando os metadados da imagem e suas configurações salvas do solver. A geração do gráfico de calibração é desativada automaticamente.</i>",
+   "<p>AstroTemps leaves BlurXTerminator's native ML selector at <b>Latest</b>. When RC-Astro installs a newer model, the workflow uses it automatically.</p>": "<p>O AstroTemps mantém o seletor nativo de ML do BlurXTerminator em <b>Latest</b>. Quando a RC-Astro instala um modelo mais recente, o workflow passa a utilizá-lo automaticamente.</p>",
+   "<p>Native BlurXTerminator <b>Sharpen Stars</b>: 0.00 to 0.70. Sharpen Nonstellar remains available up to 1.00.</p>": "<p>Parâmetro nativo do BlurXTerminator <b>Sharpen Stars</b>: 0.00 a 0.70. Sharpen Nonstellar permanece disponível até 1.00.</p>",
+   "<p>AstroTemps does not override BlurXTerminator's compute-device selection. The native process chooses the available device automatically.</p>": "<p>O AstroTemps não sobrescreve a seleção do dispositivo de processamento do BlurXTerminator. O processo nativo escolhe automaticamente o dispositivo disponível.</p>",
+   "<p>AstroTemps leaves NoiseXTerminator's native ML selector at <b>Latest</b>. A newly installed RC-Astro ML model is used automatically.</p>": "<p>O AstroTemps mantém o seletor nativo de ML do NoiseXTerminator em <b>Latest</b>. Um novo modelo de ML instalado pela RC-Astro é utilizado automaticamente.</p>",
+   "<p>AstroTemps does not override NoiseXTerminator's compute-device selection. The native process chooses the available device automatically.</p>": "<p>O AstroTemps não sobrescreve a seleção do dispositivo de processamento do NoiseXTerminator. O processo nativo escolhe automaticamente o dispositivo disponível.</p>",
+   "<p>AstroTemps leaves StarXTerminator's native ML selector at <b>Latest</b>. A newly installed RC-Astro ML model is used automatically.</p>": "<p>O AstroTemps mantém o seletor nativo de ML do StarXTerminator em <b>Latest</b>. Um novo modelo de ML instalado pela RC-Astro é utilizado automaticamente.</p>",
+   "<p>AstroTemps does not override StarXTerminator's compute-device selection. The native process chooses the available device automatically.</p>": "<p>O AstroTemps não sobrescreve a seleção do dispositivo de processamento do StarXTerminator. O processo nativo escolhe automaticamente o dispositivo disponível.</p>",
+   "<p>Uses StarNet2's native <b>Standard</b> stride (defStride).</p>": "<p>Usa o stride nativo <b>Standard</b> do StarNet2 (defStride).</p>",
+   "<i><b>Full Image:</b> automatically searches the entire _work image.<br/><b>Custom:</b> opens a preview during processing. Hold Shift and drag one or more regions, then click Search.<br/>FindBackground creates a preview named <b>Background</b>.<br/>After a successful search, <b>BackgroundNeutralization</b> runs automatically on the current _work image using that preview as ROI, then the Background preview is deleted.</i>": "<i><b>Imagem Completa:</b> pesquisa automaticamente toda a imagem _work.<br/><b>Personalizado:</b> abre uma prévia durante o processamento. Segure Shift e arraste uma ou mais regiões; depois clique em Buscar.<br/>FindBackground cria uma prévia chamada <b>Background</b>.<br/>Após uma busca bem-sucedida, <b>BackgroundNeutralization</b> é executado automaticamente na imagem _work atual usando essa prévia como ROI; em seguida, a prévia Background é excluída.</i>",
+   "<i>When enabled, the workflow pauses at this stage and opens an interactive Narrowband Normalization panel with a live preview. Adjust the native CosmicPhotons NBN parameters visually, then choose <b>Apply & Continue</b>. The default workflow opens this <b>after Image Stretch</b>, on the starless nonlinear image, so the channel balance can be judged on the actual displayed data without an extra preview stretch. Use this primarily for <b>Narrowband</b> data; for <b>Broadband</b> data this stage should normally remain disabled. No Workspace Process Icon is used.</i>": "<i>Quando ativado, o workflow pausa nesta etapa e abre um painel interativo do Narrowband Normalization com prévia em tempo real. Ajuste visualmente os parâmetros nativos do CosmicPhotons NBN e escolha <b>Aplicar e Continuar</b>. O workflow padrão abre esta etapa <b>após o Image Stretch</b>, na imagem não linear sem estrelas, permitindo avaliar o equilíbrio dos canais nos dados realmente exibidos, sem um Stretch adicional de prévia. Use esta etapa principalmente para dados <b>Narrowband</b>; para dados <b>Broadband</b>, normalmente ela deve permanecer desativada. Nenhum Workspace Process Icon é utilizado.</i>",
+   "<i>Interactive <b>RangeSelection</b> luminosity-mask editor followed by masked <b>HDRMultiscaleTransform</b>. Both panels include previews. The stage also includes <b>Skip</b>.</i>": "<i>Editor interativo de máscara de luminosidade <b>RangeSelection</b>, seguido de <b>HDRMultiscaleTransform</b> com máscara. Ambos os painéis incluem prévias. A etapa também inclui a opção <b>Pular</b>.</i>",
+   "<i>Creates <b>Red, Yellow, Green, Cyan, Blue and Magenta</b> masks with the supplied PixelMath equations, runs the requested <b>MaskBlur three times</b>, then opens sequential masked <b>CurvesTransformation</b> editors. Includes <b>Skip</b>.</i>": "<i>Cria máscaras <b>Vermelha, Amarela, Verde, Ciano, Azul e Magenta</b> com as equações PixelMath fornecidas, executa o <b>MaskBlur três vezes</b> conforme solicitado e abre, em sequência, editores <b>CurvesTransformation</b> com máscara. Inclui a opção <b>Pular</b>.</i>",
+   "<i><b>NB to RGB Stars</b> is intended for OSC dual-band star layers and reconstructs a natural RGB star image before stretching.<br/><b>Star Stretch</b> stretches an existing linear stars-only RGB image directly, with optional SCNR green removal.<br/>When this stage is reached, AstroTemps opens the selected SetiAstro-style interactive panel with a temporary preview. Choose <b>Execute & Continue</b>, <b>Skip Star Stretch</b>, or Cancel Workflow.</i>": "<i><b>NB to RGB Stars</b> foi feito para camadas de estrelas OSC dual-band e reconstrói uma imagem RGB natural das estrelas antes do Stretch.<br/><b>Star Stretch</b> aplica Stretch diretamente a uma imagem RGB linear contendo apenas estrelas, com remoção opcional de verde via SCNR.<br/>Quando esta etapa é alcançada, o AstroTemps abre o painel interativo selecionado no estilo SetiAstro com uma prévia temporária. Escolha <b>Executar e Continuar</b>, <b>Pular Star Stretch</b> ou Cancelar Workflow.</i>",
+   "<i><b>SetiAstro's Statistical Stretch:</b> target image is the current <b>_work</b>. The clipped-pixel estimate is calculated automatically in the Process Console immediately before the stretch.<br/>Defaults: Median 0.23 | Sigma 3.80 | Linked ON | Curves Boost 0.15.</i>": "<i><b>SetiAstro's Statistical Stretch:</b> a imagem-alvo é a <b>_work</b> atual. A estimativa de pixels clipados é calculada automaticamente no Process Console imediatamente antes do Stretch.<br/>Padrões: Mediana 0.23 | Sigma 3.80 | Vinculado ON | Curves Boost 0.15.</i>",
+   "<i>Opens the original Lighthouse Lightroom-style interactive panel on the current <b>_work</b> image. Use <b>Apply & Continue</b> to commit the edit, <b>Skip Lighthouse</b> to continue unchanged, or Cancel to stop the workflow.</i>": "<i>Abre o painel interativo original do Lighthouse, no estilo Lightroom, sobre a imagem <b>_work</b> atual. Use <b>Aplicar e Continuar</b> para confirmar a edição, <b>Pular Lighthouse</b> para continuar sem alterações ou Cancelar para interromper o workflow.</i>",
+   "<i>Target image: current <b>_work</b>. Defaults: Layers 8 | 5x5 B3 Spline | Amount 0.40 | Iterations 1.</i>": "<i>Imagem-alvo: <b>_work</b> atual. Padrões: Camadas 8 | 5x5 B3 Spline | Intensidade 0.40 | Iterações 1.</i>",
+   "<i>Mode: <b>Star replacement</b> | Reverse Stretch: <b>OFF</b> | Create New Image: <b>ON</b>.<br/>Starless: current <b>_work</b> | Stars: <b>NBtoRGB_stars</b> | Output: <b>Final_Image</b>.</i>": "<i>Modo: <b>Substituição de estrelas</b> | Reverse Stretch: <b>OFF</b> | Criar Nova Imagem: <b>ON</b>.<br/>Sem estrelas: <b>_work</b> atual | Estrelas: <b>NBtoRGB_stars</b> | Saída: <b>Final_Image</b>.</i>",
+   "AstroTemps AutoProcessing Tool was created by Felipe Temponi to automate and simplify parts of the astrophotography image processing workflow in PixInsight, making it easier to achieve consistent results and save time.": "O AstroTemps AutoProcessing Tool foi criado por Felipe Temponi para automatizar e simplificar partes do workflow de processamento de imagens de astrofotografia no PixInsight, facilitando a obtenção de resultados consistentes e economizando tempo.",
+   "<span style=\"color:#9aa7bd\">This is a personal, non-commercial project, developed as a hobby and shared with the community.<br/>It uses third-party tools and follows their respective licenses and terms of use.<br/>Please support the original developers of PixInsight and all the amazing tools that make this possible.</span>": "<span style=\"color:#9aa7bd\">Este é um projeto pessoal e não comercial, desenvolvido como hobby e compartilhado com a comunidade.<br/>Ele utiliza ferramentas de terceiros e segue suas respectivas licenças e termos de uso.<br/>Apoie os desenvolvedores originais do PixInsight e de todas as excelentes ferramentas que tornam este projeto possível.</span>",
+   "If you find this tool useful and would like to support its development, consider buying me a coffee.": "Se esta ferramenta for útil para você e quiser apoiar seu desenvolvimento, considere me pagar um café.",
+   "Brazilian users who would like to support the project via PIX can use the QR Code shown here.": "Usuários no Brasil que desejarem apoiar o projeto via PIX podem utilizar o QR Code exibido aqui.",
+   "<p>Reset all AstroTemps AutoProcessing Tool controls to their default values.</p>": "<p>Redefine todos os controles do AstroTemps AutoProcessing Tool para seus valores padrão.</p>",
+   "<p>Create a reusable Process Icon / script instance with the current settings.</p>": "<p>Cria um Process Icon / instância reutilizável do script com as configurações atuais.</p>"
+};
+
 function TAP_TR_UI( text )
 {
    if ( text == null )
@@ -10855,6 +11086,9 @@ function TAP_TR_UI( text )
 
    if ( TAP_I18N_PT_BR[s] != null )
       return TAP_I18N_PT_BR[s];
+
+   if ( TAP_I18N_PT_BR_EXTRA != null && TAP_I18N_PT_BR_EXTRA[s] != null )
+      return TAP_I18N_PT_BR_EXTRA[s];
 
    var out = s;
    for ( var i = 0; i < TAP_I18N_PT_BR_REPLACEMENTS.length; ++i )
@@ -15325,7 +15559,7 @@ function TAPRH_HDRDialog_init( workView, maskView )
    var scalingRow = new HorizontalSizer;
    scalingRow.spacing = 6;
    var scalingLabel = new Label( this ); scalingLabel.text = TAP_TR_UI( "Scaling function:" );
-   this.scaling = new ComboBox( this ); this.scaling.addItem( "B3 Spline (5)" ); this.scaling.currentItem = 0;
+   this.scaling = new ComboBox( this ); this.scaling.addItem( TAP_TR_UI( "B3 Spline (5)" ) ); this.scaling.currentItem = 0;
    scalingRow.add( scalingLabel ); scalingRow.add( this.scaling, 100 );
 
    this.toIntensity = new CheckBox( this ); this.toIntensity.text = TAP_TR_UI( "To intensity" );
@@ -15757,7 +15991,7 @@ function TAPMC_addNativeChannelSelector( dialog, row, channelIndex )
    var info = TAPMC_CURVE_CHANNELS[channelIndex];
 
    var swatch = new Label( dialog );
-   swatch.text = "";
+   swatch.text = TAP_TR_UI( "" );
    swatch.backgroundColor = TAPMC_channelSwatchColor( info.key );
    swatch.setScaledFixedSize( 10, 10 );
    swatch.toolTip = info.label + " channel";
@@ -16989,8 +17223,8 @@ function lighthouseCreateWaveletControls(dialog)
 
    // --- Filter row ---
    dialog.waveletFilter_ComboBox = new ComboBox(dialog);
-   dialog.waveletFilter_ComboBox.addItem("Default");
-   dialog.waveletFilter_ComboBox.addItem("Gaussian");
+   dialog.waveletFilter_ComboBox.addItem(TAP_TR_UI( "Default" ));
+   dialog.waveletFilter_ComboBox.addItem(TAP_TR_UI( "Gaussian" ));
    dialog.waveletFilter_ComboBox.currentItem = dialog.waveletFilter;
    dialog.waveletFilter_ComboBox.toolTip =
       "<p>How firm the sharpening's 'touch' is - both bring out the same fine detail, " +
@@ -17009,7 +17243,7 @@ function lighthouseCreateWaveletControls(dialog)
 
    // Small caption naming the wavelet method.
    dialog.waveletMethod_Label = new Label(dialog);
-   dialog.waveletMethod_Label.text = "à-trous wavelet";
+   dialog.waveletMethod_Label.text = TAP_TR_UI( "à-trous wavelet" );
    dialog.waveletMethod_Label.foregroundColor = UI_CATEGORY_TITLE;
    dialog.waveletMethod_Label.textAlignment = TextAlign_Left | TextAlign_VertCenter;
 
@@ -17052,7 +17286,7 @@ function lighthouseCreateWaveletControls(dialog)
 
       // Denoise: slider only (no label/box), same scale, sits to the right.
       var denoiseSlider = new NumericControl(dialog);
-      denoiseSlider.label.text = "";
+      denoiseSlider.label.text = TAP_TR_UI( "" );
       denoiseSlider.setReal(false);
       denoiseSlider.setRange(0, 100);
       denoiseSlider.slider.setRange(0, 100);
@@ -17090,13 +17324,13 @@ function lighthouseCreateWaveletControls(dialog)
 
    // Column headers centered over the two slider columns.
    dialog.waveletSharpenHeader_Label = new Label(dialog);
-   dialog.waveletSharpenHeader_Label.text = "Sharpen";
+   dialog.waveletSharpenHeader_Label.text = TAP_TR_UI( "Sharpen" );
    dialog.waveletSharpenHeader_Label.foregroundColor = UI_TEXT;
    dialog.waveletSharpenHeader_Label.textAlignment = TextAlign_Center | TextAlign_VertCenter;
    dialog.waveletSharpenHeader_Label.setFixedWidth(wvSliderW);
 
    dialog.waveletDenoiseHeader_Label = new Label(dialog);
-   dialog.waveletDenoiseHeader_Label.text = "Denoise";
+   dialog.waveletDenoiseHeader_Label.text = TAP_TR_UI( "Denoise" );
    dialog.waveletDenoiseHeader_Label.foregroundColor = UI_TEXT;
    dialog.waveletDenoiseHeader_Label.textAlignment = TextAlign_Center | TextAlign_VertCenter;
    dialog.waveletDenoiseHeader_Label.setFixedWidth(wvSliderW);
@@ -17111,7 +17345,7 @@ function lighthouseCreateWaveletControls(dialog)
 
    // --- Strength + deringing ---
    dialog.waveletStrengthSlider = new NumericControl(dialog);
-   dialog.waveletStrengthSlider.label.text = "Strength";
+   dialog.waveletStrengthSlider.label.text = TAP_TR_UI( "Strength" );
    dialog.waveletStrengthSlider.setReal(false);
    dialog.waveletStrengthSlider.setRange(0, 100);
    dialog.waveletStrengthSlider.slider.setRange(0, 100);
@@ -17126,7 +17360,7 @@ function lighthouseCreateWaveletControls(dialog)
       "<p>Double-click to reset.</p>";
 
    dialog.waveletDeringing_CheckBox = new CheckBox(dialog);
-   dialog.waveletDeringing_CheckBox.text = "Reduce dark halos (deringing)";
+   dialog.waveletDeringing_CheckBox.text = TAP_TR_UI( "Reduce dark halos (deringing)" );
    dialog.waveletDeringing_CheckBox.checked = dialog.waveletDeringing;
    dialog.waveletDeringing_CheckBox.foregroundColor = UI_TEXT;
    dialog.waveletDeringing_CheckBox.toolTip =
@@ -17875,7 +18109,7 @@ function lighthouseCreateSelectiveColorControls(dialog)
 
    dialog.selColorGroup_ComboBox = new ComboBox(dialog);
    for (var g = 0; g < LIGHTHOUSE_SC_GROUPS.length; ++g)
-      dialog.selColorGroup_ComboBox.addItem(LIGHTHOUSE_SC_GROUPS[g].label);
+      dialog.selColorGroup_ComboBox.addItem(TAP_TR_UI( LIGHTHOUSE_SC_GROUPS[g].label ));
    dialog.selColorGroup_ComboBox.currentItem = dialog.selColorActiveGroup;
    dialog.selColorGroup_ComboBox.toolTip =
       "<p>Which colour range the four sliders below edit. Each group keeps its own " +
@@ -17894,8 +18128,8 @@ function lighthouseCreateSelectiveColorControls(dialog)
    }, function() { return self.selColorActiveGroup; });
 
    dialog.selColorMode_ComboBox = new ComboBox(dialog);
-   dialog.selColorMode_ComboBox.addItem("Relative");
-   dialog.selColorMode_ComboBox.addItem("Absolute");
+   dialog.selColorMode_ComboBox.addItem(TAP_TR_UI( "Relative" ));
+   dialog.selColorMode_ComboBox.addItem(TAP_TR_UI( "Absolute" ));
    dialog.selColorMode_ComboBox.currentItem = dialog.selColorMode;
    dialog.selColorMode_ComboBox.toolTip =
       "<p>How strongly the sliders act.</p>" +
@@ -17914,11 +18148,11 @@ function lighthouseCreateSelectiveColorControls(dialog)
    dialog.selColorSwatch_Frame = new Frame(dialog);
    dialog.selColorSwatch_Frame.setScaledFixedSize(16, 16);
    dialog.selColorSwatch_Frame.backgroundColor = LIGHTHOUSE_SC_GROUPS[dialog.selColorActiveGroup].swatch;
-   dialog.selColorSwatch_Frame.toolTip = "<p>The colour range the sliders below are editing.</p>";
+   dialog.selColorSwatch_Frame.toolTip = TAP_TR_UI( "<p>The colour range the sliders below are editing.</p>" );
    dialog.attachToolWheel(dialog.selColorSwatch_Frame);
 
    dialog.selColorGroup_Label = new Label(dialog);
-   dialog.selColorGroup_Label.text = "Colors";
+   dialog.selColorGroup_Label.text = TAP_TR_UI( "Colors" );
    dialog.selColorGroup_Label.setFixedWidth(dialog.controlLabelWidth);
    dialog.selColorGroup_Label.textAlignment = TextAlign_Left | TextAlign_VertCenter;
    dialog.selColorGroup_Label.foregroundColor = UI_TEXT;
@@ -17946,7 +18180,7 @@ function lighthouseCreateSelectiveColorControls(dialog)
    dialog.selColorInkSliders = [];
    for (var i = 0; i < LIGHTHOUSE_SC_INKS.length; ++i) {
       var slider = new NumericControl(dialog);
-      slider.label.text = inkLabels[i];
+      slider.label.text = TAP_TR_UI( inkLabels[i] );
       slider.setReal(false);
       slider.setRange(-100, 100);
       slider.slider.setRange(-100, 100);
@@ -17965,7 +18199,7 @@ function lighthouseCreateSelectiveColorControls(dialog)
    }
 
    dialog.selColorRangeSlider = new NumericControl(dialog);
-   dialog.selColorRangeSlider.label.text = "Range";
+   dialog.selColorRangeSlider.label.text = TAP_TR_UI( "Range" );
    dialog.selColorRangeSlider.setReal(false);
    dialog.selColorRangeSlider.setRange(0, 100);
    dialog.selColorRangeSlider.slider.setRange(0, 100);
@@ -17997,7 +18231,7 @@ function lighthouseCreateSelectiveColorControls(dialog)
    dialog.attachPreviewOnSliderRelease(dialog.selColorRangeSlider);
 
    dialog.selColorShadowGuardSlider = new NumericControl(dialog);
-   dialog.selColorShadowGuardSlider.label.text = "Protect shadows";
+   dialog.selColorShadowGuardSlider.label.text = TAP_TR_UI( "Protect shadows" );
    dialog.selColorShadowGuardSlider.setReal(false);
    dialog.selColorShadowGuardSlider.setRange(0, 100);
    dialog.selColorShadowGuardSlider.slider.setRange(0, 100);
@@ -18026,7 +18260,7 @@ function lighthouseCreateSelectiveColorControls(dialog)
    };
 
    dialog.selColorSmoothSlider = new NumericControl(dialog);
-   dialog.selColorSmoothSlider.label.text = "Smoothness";
+   dialog.selColorSmoothSlider.label.text = TAP_TR_UI( "Smoothness" );
    dialog.selColorSmoothSlider.setReal(false);
    dialog.selColorSmoothSlider.setRange(0, 100);
    dialog.selColorSmoothSlider.slider.setRange(0, 100);
@@ -18053,7 +18287,7 @@ function lighthouseCreateSelectiveColorControls(dialog)
    };
 
    dialog.selColorShowMask_CheckBox = new CheckBox(dialog);
-   dialog.selColorShowMask_CheckBox.text = "Show selection mask";
+   dialog.selColorShowMask_CheckBox.text = TAP_TR_UI( "Show selection mask" );
    dialog.selColorShowMask_CheckBox.checked = dialog.selColorShowMask;
    dialog.selColorShowMask_CheckBox.foregroundColor = UI_TEXT;
    dialog.selColorShowMask_CheckBox.toolTip =
@@ -18068,7 +18302,7 @@ function lighthouseCreateSelectiveColorControls(dialog)
    };
 
    dialog.selColorLumProtect_CheckBox = new CheckBox(dialog);
-   dialog.selColorLumProtect_CheckBox.text = "Preserve luminance";
+   dialog.selColorLumProtect_CheckBox.text = TAP_TR_UI( "Preserve luminance" );
    dialog.selColorLumProtect_CheckBox.checked = dialog.selColorLumProtect;
    dialog.selColorLumProtect_CheckBox.foregroundColor = UI_TEXT;
    dialog.selColorLumProtect_CheckBox.toolTip =
@@ -18081,7 +18315,7 @@ function lighthouseCreateSelectiveColorControls(dialog)
    };
 
    dialog.selColorReset_Button = new PushButton(dialog);
-   dialog.selColorReset_Button.text = "Reset color";
+   dialog.selColorReset_Button.text = TAP_TR_UI( "Reset color" );
    dialog.selColorReset_Button.backgroundColor = UI_PANEL;
    dialog.selColorReset_Button.foregroundColor = UI_TEXT;
    dialog.selColorReset_Button.defaultButton = false;
@@ -18125,8 +18359,8 @@ function lighthouseCreateSelectiveColorControls(dialog)
       var active = lighthouseSelColorActiveGroups(self);
       var names = [];
       for (var n = 0; n < active.length; ++n)
-         names.push(LIGHTHOUSE_SC_GROUPS[active[n]].label);
-      self.selColorEdited_Label.text = (names.length > 0) ? ("Edited: " + names.join(", ")) : "Edited: none";
+         names.push(TAP_TR_UI( LIGHTHOUSE_SC_GROUPS[active[n]].label ));
+      self.selColorEdited_Label.text = (names.length > 0) ? (TAP_TR_UI( "Edited:" ) + " " + names.join(", ")) : TAP_TR_UI( "Edited: none" );
    };
 
    // Load the selected group's four values into the sliders.
@@ -18802,10 +19036,10 @@ function lighthouseCreateWatermarkControls(dialog)
    var self = dialog;
 
    dialog.watermarkEnabled_CheckBox = new CheckBox(dialog);
-   dialog.watermarkEnabled_CheckBox.text = "Enable watermark";
+   dialog.watermarkEnabled_CheckBox.text = TAP_TR_UI( "Enable watermark" );
    dialog.watermarkEnabled_CheckBox.checked = dialog.watermarkEnabled;
    dialog.watermarkEnabled_CheckBox.foregroundColor = UI_TEXT;
-   dialog.watermarkEnabled_CheckBox.toolTip = "<p>Overlay a logo image or a line of text onto the final image - a signature, a copyright notice, a studio mark. Drag it into place on the preview once it appears.</p>";
+   dialog.watermarkEnabled_CheckBox.toolTip = TAP_TR_UI( "<p>Overlay a logo image or a line of text onto the final image - a signature, a copyright notice, a studio mark. Drag it into place on the preview once it appears.</p>" );
    dialog.watermarkEnabled_CheckBox.onCheck = function (checked) {
       self.watermarkEnabled = checked;
       if (checked)
@@ -18817,8 +19051,8 @@ function lighthouseCreateWatermarkControls(dialog)
    };
 
    dialog.watermarkMode_ComboBox = new ComboBox(dialog);
-   dialog.watermarkMode_ComboBox.addItem("Image");
-   dialog.watermarkMode_ComboBox.addItem("Text");
+   dialog.watermarkMode_ComboBox.addItem(TAP_TR_UI( "Image" ));
+   dialog.watermarkMode_ComboBox.addItem(TAP_TR_UI( "Text" ));
    dialog.watermarkMode_ComboBox.currentItem = dialog.watermarkMode;
    dialog.attachComboNoWheel(dialog.watermarkMode_ComboBox, function (index) {
       self.watermarkMode = (index == 1) ? LIGHTHOUSE_WM_MODE_TEXT : LIGHTHOUSE_WM_MODE_IMAGE;
@@ -18830,10 +19064,10 @@ function lighthouseCreateWatermarkControls(dialog)
 
    // --- Image mode row ---
    dialog.watermarkLoadImage_Button = new PushButton(dialog);
-   dialog.watermarkLoadImage_Button.text = "Load image...";
+   dialog.watermarkLoadImage_Button.text = TAP_TR_UI( "Load image..." );
    dialog.watermarkLoadImage_Button.backgroundColor = UI_PANEL;
    dialog.watermarkLoadImage_Button.foregroundColor = UI_TEXT;
-   dialog.watermarkLoadImage_Button.toolTip = "<p>Choose an image file to use as the watermark - a PNG with transparency works best for a logo or signature.</p>";
+   dialog.watermarkLoadImage_Button.toolTip = TAP_TR_UI( "<p>Choose an image file to use as the watermark - a PNG with transparency works best for a logo or signature.</p>" );
    dialog.watermarkLoadImage_Button.onClick = function () {
       var ofd = new OpenFileDialog;
       ofd.caption = TAP_TR_UI( "Select watermark image" );
@@ -18850,14 +19084,14 @@ function lighthouseCreateWatermarkControls(dialog)
    };
 
    dialog.watermarkClearImage_Button = new PushButton(dialog);
-   dialog.watermarkClearImage_Button.text = "Clear";
+   dialog.watermarkClearImage_Button.text = TAP_TR_UI( "Clear" );
    dialog.watermarkClearImage_Button.backgroundColor = UI_PANEL;
    dialog.watermarkClearImage_Button.foregroundColor = UI_TEXT;
-   dialog.watermarkClearImage_Button.toolTip = "<p>Remove the loaded watermark image.</p>";
+   dialog.watermarkClearImage_Button.toolTip = TAP_TR_UI( "<p>Remove the loaded watermark image.</p>" );
    dialog.watermarkClearImage_Button.onClick = function () {
       self.watermarkImagePath = "";
-      self.watermarkImagePath_Label.text = "(no image loaded)";
-      self.watermarkImagePath_Label.toolTip = "";
+      self.watermarkImagePath_Label.text = TAP_TR_UI( "(no image loaded)" );
+      self.watermarkImagePath_Label.toolTip = TAP_TR_UI( "" );
       lighthouseWatermarkRefreshPreviewMirror(self);
       self.schedulePreview();
    };
@@ -18875,10 +19109,10 @@ function lighthouseCreateWatermarkControls(dialog)
    dialog.watermarkImageButtons_Sizer.addStretch();
 
    dialog.watermarkKeepAspect_CheckBox = new CheckBox(dialog);
-   dialog.watermarkKeepAspect_CheckBox.text = "Keep aspect ratio";
+   dialog.watermarkKeepAspect_CheckBox.text = TAP_TR_UI( "Keep aspect ratio" );
    dialog.watermarkKeepAspect_CheckBox.checked = dialog.watermarkKeepAspect;
    dialog.watermarkKeepAspect_CheckBox.foregroundColor = UI_TEXT;
-   dialog.watermarkKeepAspect_CheckBox.toolTip = "<p>Resizing keeps the image's own proportions instead of stretching it.</p>";
+   dialog.watermarkKeepAspect_CheckBox.toolTip = TAP_TR_UI( "<p>Resizing keeps the image's own proportions instead of stretching it.</p>" );
    dialog.watermarkKeepAspect_CheckBox.onCheck = function (checked) {
       self.watermarkKeepAspect = checked;
       lighthouseWatermarkRefreshPreviewMirror(self);
@@ -18890,7 +19124,7 @@ function lighthouseCreateWatermarkControls(dialog)
    dialog.watermarkText_Edit.text = dialog.watermarkText;
    dialog.watermarkText_Edit.backgroundColor = UI_PANEL;
    dialog.watermarkText_Edit.foregroundColor = UI_TEXT;
-   dialog.watermarkText_Edit.toolTip = "<p>The watermark text - a name, a signature, a copyright line.</p>";
+   dialog.watermarkText_Edit.toolTip = TAP_TR_UI( "<p>The watermark text - a name, a signature, a copyright line.</p>" );
    dialog.watermarkText_Edit.onEditCompleted = function () {
       self.watermarkText = self.watermarkText_Edit.text;
       lighthouseWatermarkEnsurePlaced(self);
@@ -18911,7 +19145,7 @@ function lighthouseCreateWatermarkControls(dialog)
    dialog.watermarkFont_Sizer = dialog.optionRow("Font", dialog.watermarkFont_ComboBox);
 
    dialog.watermarkBold_CheckBox = new CheckBox(dialog);
-   dialog.watermarkBold_CheckBox.text = "Bold";
+   dialog.watermarkBold_CheckBox.text = TAP_TR_UI( "Bold" );
    dialog.watermarkBold_CheckBox.checked = dialog.watermarkFontBold;
    dialog.watermarkBold_CheckBox.foregroundColor = UI_TEXT;
    dialog.watermarkBold_CheckBox.onCheck = function (checked) {
@@ -18921,7 +19155,7 @@ function lighthouseCreateWatermarkControls(dialog)
    };
 
    dialog.watermarkItalic_CheckBox = new CheckBox(dialog);
-   dialog.watermarkItalic_CheckBox.text = "Italic";
+   dialog.watermarkItalic_CheckBox.text = TAP_TR_UI( "Italic" );
    dialog.watermarkItalic_CheckBox.checked = dialog.watermarkFontItalic;
    dialog.watermarkItalic_CheckBox.foregroundColor = UI_TEXT;
    dialog.watermarkItalic_CheckBox.onCheck = function (checked) {
@@ -18941,7 +19175,7 @@ function lighthouseCreateWatermarkControls(dialog)
    dialog.watermarkColorSwatch_Frame.setScaledFixedSize(16, 16);
    dialog.watermarkColorSwatch_Frame.backgroundColor =
       0xff000000 | (dialog.watermarkTextR << 16) | (dialog.watermarkTextG << 8) | dialog.watermarkTextB;
-   dialog.watermarkColorSwatch_Frame.toolTip = "<p>The text colour, set by the R/G/B sliders below.</p>";
+   dialog.watermarkColorSwatch_Frame.toolTip = TAP_TR_UI( "<p>The text colour, set by the R/G/B sliders below.</p>" );
 
    var updateWatermarkSwatch = function () {
       self.watermarkColorSwatch_Frame.backgroundColor =
@@ -18954,7 +19188,7 @@ function lighthouseCreateWatermarkControls(dialog)
    dialog.watermarkColorLabel_Sizer.addSpacing(dialog.controlLabelWidth + 4);
    dialog.watermarkColorLabel_Sizer.add(dialog.watermarkColorSwatch_Frame);
    dialog.watermarkColorLabel_Label = new Label(dialog);
-   dialog.watermarkColorLabel_Label.text = "Text colour";
+   dialog.watermarkColorLabel_Label.text = TAP_TR_UI( "Text colour" );
    dialog.watermarkColorLabel_Label.foregroundColor = UI_TEXT;
    dialog.watermarkColorLabel_Sizer.add(dialog.watermarkColorLabel_Label);
    dialog.watermarkColorLabel_Sizer.addStretch();
@@ -18997,22 +19231,22 @@ function lighthouseCreateWatermarkControls(dialog)
    dialog.watermarkBlendMode_Sizer = dialog.optionRow("Blend mode", dialog.watermarkBlendMode_ComboBox);
 
    dialog.watermarkOpacitySlider = new NumericControl(dialog);
-   dialog.watermarkOpacitySlider.label.text = "Opacity";
+   dialog.watermarkOpacitySlider.label.text = TAP_TR_UI( "Opacity" );
    dialog.watermarkOpacitySlider.setReal(false);
    dialog.watermarkOpacitySlider.setRange(0, 100);
    dialog.watermarkOpacitySlider.slider.setRange(0, 100);
    dialog.watermarkOpacitySlider.setValue(dialog.watermarkOpacity);
-   dialog.watermarkOpacitySlider.toolTip = "<p>Overall watermark strength/transparency.</p>";
+   dialog.watermarkOpacitySlider.toolTip = TAP_TR_UI( "<p>Overall watermark strength/transparency.</p>" );
    dialog.styleNumericControl(dialog.watermarkOpacitySlider);
    dialog.watermarkOpacitySlider.onValueUpdated = function (v) { self.watermarkOpacity = v; };
    dialog.attachResetOnDoubleClick(dialog.watermarkOpacitySlider, 80, function (v) { self.watermarkOpacity = v; });
    dialog.attachPreviewOnSliderRelease(dialog.watermarkOpacitySlider);
 
    dialog.watermarkResetPosition_Button = new PushButton(dialog);
-   dialog.watermarkResetPosition_Button.text = "Reset position";
+   dialog.watermarkResetPosition_Button.text = TAP_TR_UI( "Reset position" );
    dialog.watermarkResetPosition_Button.backgroundColor = UI_PANEL;
    dialog.watermarkResetPosition_Button.foregroundColor = UI_TEXT;
-   dialog.watermarkResetPosition_Button.toolTip = "<p>Snap the watermark back to its default corner and size.</p>";
+   dialog.watermarkResetPosition_Button.toolTip = TAP_TR_UI( "<p>Snap the watermark back to its default corner and size.</p>" );
    dialog.watermarkResetPosition_Button.onClick = function () {
       self.watermarkRegion = lighthouseWatermarkDefaultRegion();
       var aspect = lighthouseWatermarkNaturalAspect(self);
@@ -19027,10 +19261,10 @@ function lighthouseCreateWatermarkControls(dialog)
    // the watermark still applies, only its on-screen outline is toggled, and
    // dragging is disabled while hidden so there's no invisible hit target.
    dialog.watermarkHideBox_CheckBox = new CheckBox(dialog);
-   dialog.watermarkHideBox_CheckBox.text = "Hide placement box";
+   dialog.watermarkHideBox_CheckBox.text = TAP_TR_UI( "Hide placement box" );
    dialog.watermarkHideBox_CheckBox.checked = dialog.watermarkHideBox;
    dialog.watermarkHideBox_CheckBox.foregroundColor = UI_TEXT;
-   dialog.watermarkHideBox_CheckBox.toolTip = "<p>Hide the yellow placement outline and its resize handle, so you can see the watermark on the image without distractions. The watermark itself still applies - only the outline is hidden.</p><p>While it's hidden the box can't be dragged or resized; untick to move it again.</p>";
+   dialog.watermarkHideBox_CheckBox.toolTip = TAP_TR_UI( "<p>Hide the yellow placement outline and its resize handle, so you can see the watermark on the image without distractions. The watermark itself still applies - only the outline is hidden.</p><p>While it's hidden the box can't be dragged or resized; untick to move it again.</p>" );
    dialog.watermarkHideBox_CheckBox.onCheck = function (checked) {
       self.watermarkHideBox = checked;
       if (self.previewControl) {
@@ -19121,8 +19355,8 @@ function lighthouseCreateWatermarkControls(dialog)
       lighthouseWatermarkInitDefaults(self);
       self.watermarkEnabled_CheckBox.checked = self.watermarkEnabled;
       self.watermarkMode_ComboBox.currentItem = self.watermarkMode;
-      self.watermarkImagePath_Label.text = "(no image loaded)";
-      self.watermarkImagePath_Label.toolTip = "";
+      self.watermarkImagePath_Label.text = TAP_TR_UI( "(no image loaded)" );
+      self.watermarkImagePath_Label.toolTip = TAP_TR_UI( "" );
       self.watermarkKeepAspect_CheckBox.checked = self.watermarkKeepAspect;
       self.watermarkText_Edit.text = self.watermarkText;
       self.watermarkFont_ComboBox.currentItem = 0;
@@ -19948,7 +20182,7 @@ function lighthouseCreateCurvesControls(dialog)
    var self = dialog;
 
    dialog.curveEditor = new LighthouseCurveEditor(dialog);
-   dialog.curveEditor.toolTip = "<p><b>Point curve</b>, like Lightroom's. <b>Click</b> anywhere on the plot to add a point, then <b>drag</b> it. <b>Double-click</b> a point to remove it (the two end points stay). The live histogram is drawn behind the curve.</p><p>Up is brighter, right is the input value - so lifting the left half opens the shadows, and an S shape adds contrast.</p><p>Curves obey the <b>Luminosity Masks</b> and any <b>select area</b> regions, exactly like the other tools.</p>";
+   dialog.curveEditor.toolTip = TAP_TR_UI( "<p><b>Point curve</b>, like Lightroom's. <b>Click</b> anywhere on the plot to add a point, then <b>drag</b> it. <b>Double-click</b> a point to remove it (the two end points stay). The live histogram is drawn behind the curve.</p><p>Up is brighter, right is the input value - so lifting the left half opens the shadows, and an S shape adds contrast.</p><p>Curves obey the <b>Luminosity Masks</b> and any <b>select area</b> regions, exactly like the other tools.</p>" );
    dialog.curveEditor.setChannel(dialog.curveActiveChannel,
       dialog[LIGHTHOUSE_CURVE_CHANNELS[dialog.curveActiveChannel].prop]);
 
@@ -19969,21 +20203,21 @@ function lighthouseCreateCurvesControls(dialog)
    dialog.curveChannel_Sizer = dialog.optionRow("Channel", dialog.curveChannel_ComboBox);
 
    dialog.curveReset_Button = new PushButton(dialog);
-   dialog.curveReset_Button.text = "Reset channel";
+   dialog.curveReset_Button.text = TAP_TR_UI( "Reset channel" );
    dialog.curveReset_Button.backgroundColor = UI_PANEL;
    dialog.curveReset_Button.foregroundColor = UI_TEXT;
    dialog.curveReset_Button.defaultButton = false;
-   dialog.curveReset_Button.toolTip = "<p>Straighten the curve for the channel shown above, back to the neutral diagonal.</p>";
+   dialog.curveReset_Button.toolTip = TAP_TR_UI( "<p>Straighten the curve for the channel shown above, back to the neutral diagonal.</p>" );
    dialog.curveReset_Button.onClick = function () {
       self.curveEditor.resetCurve();
    };
 
    dialog.curveResetAll_Button = new PushButton(dialog);
-   dialog.curveResetAll_Button.text = "Reset all";
+   dialog.curveResetAll_Button.text = TAP_TR_UI( "Reset all" );
    dialog.curveResetAll_Button.backgroundColor = UI_PANEL;
    dialog.curveResetAll_Button.foregroundColor = UI_TEXT;
    dialog.curveResetAll_Button.defaultButton = false;
-   dialog.curveResetAll_Button.toolTip = "<p>Straighten all four curves - RGB, Red, Green and Blue.</p>";
+   dialog.curveResetAll_Button.toolTip = TAP_TR_UI( "<p>Straighten all four curves - RGB, Red, Green and Blue.</p>" );
    dialog.curveResetAll_Button.onClick = function () {
       for (var k = 0; k < LIGHTHOUSE_CURVE_CHANNELS.length; ++k) {
          var arr = self[LIGHTHOUSE_CURVE_CHANNELS[k].prop];
@@ -20553,7 +20787,7 @@ function lighthouseCreateHSLControls(dialog)
    }
 
    dialog.hslResetChannel_Button = new PushButton(dialog);
-   dialog.hslResetChannel_Button.text = "Reset channel";
+   dialog.hslResetChannel_Button.text = TAP_TR_UI( "Reset channel" );
    dialog.hslResetChannel_Button.backgroundColor = UI_PANEL;
    dialog.hslResetChannel_Button.foregroundColor = UI_TEXT;
    dialog.hslResetChannel_Button.defaultButton = false;
@@ -20569,7 +20803,7 @@ function lighthouseCreateHSLControls(dialog)
    };
 
    dialog.hslResetAll_Button = new PushButton(dialog);
-   dialog.hslResetAll_Button.text = "Reset all";
+   dialog.hslResetAll_Button.text = TAP_TR_UI( "Reset all" );
    dialog.hslResetAll_Button.backgroundColor = UI_PANEL;
    dialog.hslResetAll_Button.foregroundColor = UI_TEXT;
    dialog.hslResetAll_Button.defaultButton = false;
@@ -20587,7 +20821,7 @@ function lighthouseCreateHSLControls(dialog)
    dialog.hslEdited_Label = new Label(dialog);
    dialog.hslEdited_Label.foregroundColor = UI_CATEGORY_TITLE;
    dialog.hslEdited_Label.textAlignment = TextAlign_Left | TextAlign_VertCenter;
-   dialog.hslEdited_Label.toolTip = "<p>Which colours currently have non-zero settings.</p>";
+   dialog.hslEdited_Label.toolTip = TAP_TR_UI( "<p>Which colours currently have non-zero settings.</p>" );
 
    dialog.hslButtons_Sizer = new HorizontalSizer;
    dialog.hslButtons_Sizer.spacing = 6;
@@ -20610,7 +20844,7 @@ function lighthouseCreateHSLControls(dialog)
       var names = [];
       for (var n = 0; n < active.length; ++n)
          names.push(LIGHTHOUSE_HSL_BANDS[active[n]].label);
-      self.hslEdited_Label.text = (names.length > 0) ? ("Edited: " + names.join(", ")) : "Edited: none";
+      self.hslEdited_Label.text = (names.length > 0) ? (TAP_TR_UI( "Edited:" ) + " " + names.join(", ")) : TAP_TR_UI( "Edited: none" );
    };
 
    // Loads the selected channel's eight values into the sliders and repaints their
@@ -24308,7 +24542,7 @@ function HighlightPreviewControl_init(parent) {
    };
 
    this.updateModeText = function () {
-      this.mode_Label.text = this.showOriginal || !this.previewEnabled ? "Original" : "Preview";
+      this.mode_Label.text = TAP_TR_UI( this.showOriginal || !this.previewEnabled ? "Original" : "Preview" );
    };
 
    this.clearScaledBitmap = function () {
@@ -24507,7 +24741,7 @@ function HighlightPreviewControl_init(parent) {
       if (text != null)
          this.readout_Label.text = text;
       else
-         this.readout_Label.text = "Outside preview image";
+         this.readout_Label.text = TAP_TR_UI( "Outside preview image" );
 
       this.scrollbox.viewport.update();
    };
@@ -24604,7 +24838,7 @@ function HighlightPreviewControl_init(parent) {
    this.zoomIn_Button = new ToolButton(this);
    this.zoomIn_Button.icon = this.scaledResource(":/icons/zoom-in.png");
    this.zoomIn_Button.setScaledFixedSize(24, 24);
-   this.zoomIn_Button.toolTip = "Zoom in";
+   this.zoomIn_Button.toolTip = TAP_TR_UI( "Zoom in" );
    this.zoomIn_Button.onMousePress = function () {
       this.parent.updateZoom(this.parent.zoom + 1);
    };
@@ -24612,7 +24846,7 @@ function HighlightPreviewControl_init(parent) {
    this.zoomOut_Button = new ToolButton(this);
    this.zoomOut_Button.icon = this.scaledResource(":/icons/zoom-out.png");
    this.zoomOut_Button.setScaledFixedSize(24, 24);
-   this.zoomOut_Button.toolTip = "Zoom out";
+   this.zoomOut_Button.toolTip = TAP_TR_UI( "Zoom out" );
    this.zoomOut_Button.onMousePress = function () {
       this.parent.updateZoom(this.parent.zoom - 1);
    };
@@ -24620,7 +24854,7 @@ function HighlightPreviewControl_init(parent) {
    this.zoomFit_Button = new ToolButton(this);
    this.zoomFit_Button.icon = this.scaledResource(":/image-window/zoom-fit.png");
    this.zoomFit_Button.setScaledFixedSize(24, 24);
-   this.zoomFit_Button.toolTip = "Fit preview";
+   this.zoomFit_Button.toolTip = TAP_TR_UI( "Fit preview" );
    this.zoomFit_Button.onMousePress = function () {
       this.parent.setZoomOutLimit();
       this.parent.updateZoom(-100);
@@ -24629,32 +24863,32 @@ function HighlightPreviewControl_init(parent) {
    this.zoom11_Button = new ToolButton(this);
    this.zoom11_Button.icon = this.scaledResource(":/icons/zoom-1-1.png");
    this.zoom11_Button.setScaledFixedSize(24, 24);
-   this.zoom11_Button.toolTip = "Zoom 1:1";
+   this.zoom11_Button.toolTip = TAP_TR_UI( "Zoom 1:1" );
    this.zoom11_Button.onMousePress = function () {
       this.parent.updateZoom(1);
    };
 
    this.zoomLabel_Label = new Label(this);
-   this.zoomLabel_Label.text = "Zoom:";
+   this.zoomLabel_Label.text = TAP_TR_UI( "Zoom:" );
    this.zoomLabel_Label.foregroundColor = UI_TEXT;
 
    this.zoomVal_Label = new Label(this);
-   this.zoomVal_Label.text = "Fit";
+   this.zoomVal_Label.text = TAP_TR_UI( "Fit" );
    this.zoomVal_Label.foregroundColor = UI_TEXT;
 
    this.readout_Label = new Label(this);
    this.readout_Label.text = this.pixelReadoutDefaultText;
    this.readout_Label.useRichText = true;
    this.readout_Label.foregroundColor = UI_TEXT;
-   this.readout_Label.toolTip = "<p>Hold Ctrl and left-click the preview to read pixel values under the cursor.</p>";
+   this.readout_Label.toolTip = TAP_TR_UI( "<p>Hold Ctrl and left-click the preview to read pixel values under the cursor.</p>" );
 
    this.mode_Label = new Label(this);
-   this.mode_Label.text = "Preview";
+   this.mode_Label.text = TAP_TR_UI( "Preview" );
    this.mode_Label.foregroundColor = UI_TEXT;
 
    // Leaves the Shift+drag preview region and returns to the whole image.
    this.fullView_Button = new PushButton(this);
-   this.fullView_Button.text = "Full view";
+   this.fullView_Button.text = TAP_TR_UI( "Full view" );
    this.fullView_Button.backgroundColor = UI_PANEL;
    this.fullView_Button.foregroundColor = UI_TEXT;
    this.fullView_Button.defaultButton = false;
@@ -27132,8 +27366,8 @@ function DialogUI_init() {
    };
 
    this.lumMaskType_ComboBox = new ComboBox(this);
-   this.lumMaskType_ComboBox.addItem("Lights");
-   this.lumMaskType_ComboBox.addItem("Darks");
+   this.lumMaskType_ComboBox.addItem(TAP_TR_UI( "Lights" ));
+   this.lumMaskType_ComboBox.addItem(TAP_TR_UI( "Darks" ));
    this.lumMaskType_ComboBox.currentItem = this.lumMaskType;
    this.attachComboNoWheel(this.lumMaskType_ComboBox, function(index) {
       self.lumMaskType = lighthouseLuminosityMaskType(index);
@@ -27141,11 +27375,11 @@ function DialogUI_init() {
    }, function() { return self.lumMaskType; });
 
    this.lumMaskDepth_ComboBox = new ComboBox(this);
-   this.lumMaskDepth_ComboBox.addItem("1");
-   this.lumMaskDepth_ComboBox.addItem("2");
-   this.lumMaskDepth_ComboBox.addItem("3");
-   this.lumMaskDepth_ComboBox.addItem("4");
-   this.lumMaskDepth_ComboBox.addItem("5");
+   this.lumMaskDepth_ComboBox.addItem(TAP_TR_UI( "1" ));
+   this.lumMaskDepth_ComboBox.addItem(TAP_TR_UI( "2" ));
+   this.lumMaskDepth_ComboBox.addItem(TAP_TR_UI( "3" ));
+   this.lumMaskDepth_ComboBox.addItem(TAP_TR_UI( "4" ));
+   this.lumMaskDepth_ComboBox.addItem(TAP_TR_UI( "5" ));
    this.lumMaskDepth_ComboBox.currentItem = this.lumMaskDepth - 1;
    this.attachComboNoWheel(this.lumMaskDepth_ComboBox, function(index) {
       self.lumMaskDepth = lighthouseLuminosityMaskDepth(index + 1);
@@ -27153,8 +27387,8 @@ function DialogUI_init() {
    }, function() { return self.lumMaskDepth - 1; });
 
    this.lumMaskMode_ComboBox = new ComboBox(this);
-   this.lumMaskMode_ComboBox.addItem("Target");
-   this.lumMaskMode_ComboBox.addItem("Protect");
+   this.lumMaskMode_ComboBox.addItem(TAP_TR_UI( "Target" ));
+   this.lumMaskMode_ComboBox.addItem(TAP_TR_UI( "Protect" ));
    this.lumMaskMode_ComboBox.currentItem = this.lumMaskMode;
    this.attachComboNoWheel(this.lumMaskMode_ComboBox, function(index) {
       self.lumMaskMode = lighthouseLuminosityMaskMode(index);
@@ -27588,8 +27822,8 @@ function DialogUI_init() {
    this.monitorProfile_Label.textAlignment = TextAlign_Right | TextAlign_VertCenter;
 
    this.monitorProfile_ComboBox = new ComboBox(this);
-   this.monitorProfile_ComboBox.addItem("Auto-detect (recommended)");
-   this.monitorProfile_ComboBox.addItem("None (no color management)");
+   this.monitorProfile_ComboBox.addItem(TAP_TR_UI( "Auto-detect (recommended)" ));
+   this.monitorProfile_ComboBox.addItem(TAP_TR_UI( "None (no color management)" ));
    this.lighthouseProfileList = lighthouseListICCProfiles();
    var monitorProfileIndex = (this.monitorProfileMode == "none") ? 1 : 0;
    for (var lhp = 0; lhp < this.lighthouseProfileList.length; ++lhp) {
@@ -29010,7 +29244,7 @@ function TAP_executeLighthouse( view )
       if ( lighthouseDialog.button_Sizer != null )
       {
          lighthouseDialog.astroTempsSkip_Button = new PushButton( lighthouseDialog );
-         lighthouseDialog.astroTempsSkip_Button.text = "Skip Lighthouse";
+         lighthouseDialog.astroTempsSkip_Button.text = TAP_TR_UI( "Skip Lighthouse" );
          lighthouseDialog.astroTempsSkip_Button.toolTip =
             "<p>Close Lighthouse without applying edits and continue the AstroTemps workflow.</p>";
          lighthouseDialog.astroTempsSkip_Button.onClick = function()
@@ -29480,7 +29714,7 @@ function TAPInfo_PIXQRControl_init( parent )
 {
    var self = this;
    this.setScaledFixedSize( 120, 120 );
-   this.toolTip = "<p>PIX QR Code for Brazilian users who would like to support AstroTemps.</p>";
+   this.toolTip = TAP_TR_UI( "<p>PIX QR Code for Brazilian users who would like to support AstroTemps.</p>" );
 
    this.onPaint = function( x0, y0, x1, y1 )
    {
@@ -29551,8 +29785,8 @@ function AstroTempsAutoProcessingDialog_init( initialSettings )
    this.language_Label.textAlignment = TextAlign_Right | TextAlign_VertCenter;
 
    this.language_Combo = new ComboBox( this );
-   this.language_Combo.addItem( "English (EN-US)" );
-   this.language_Combo.addItem( "Português (PT-BR)" );
+   this.language_Combo.addItem( TAP_TR_UI( "English (EN-US)" ) );
+   this.language_Combo.addItem( TAP_TR_UI( "Português (PT-BR)" ) );
    this.language_Combo.currentItem =
       TAP_CURRENT_LANGUAGE == TAP_LANGUAGE_PT_BR ? 1 : 0;
    this.language_Combo.toolTip = TAP_TR_UI(
@@ -29815,8 +30049,8 @@ function AstroTempsAutoProcessingDialog_init( initialSettings )
    this.opticalEngine_Label.textAlignment = TextAlign_Right | TextAlign_VertCenter;
 
    this.opticalEngine_Combo = new ComboBox( p1 );
-   this.opticalEngine_Combo.addItem( "BlurXTerminator - Correct Only" );
-   this.opticalEngine_Combo.addItem( "Cosmic Clarity - Correct Only (SASpro)" );
+   this.opticalEngine_Combo.addItem( TAP_TR_UI( "BlurXTerminator - Correct Only" ) );
+   this.opticalEngine_Combo.addItem( TAP_TR_UI( "Cosmic Clarity - Correct Only (SASpro)" ) );
    this.opticalEngine_Combo.currentItem = initialSettings.opticalEngine;
 
    var opticalEngineRow = new HorizontalSizer;
@@ -29870,8 +30104,8 @@ function AstroTempsAutoProcessingDialog_init( initialSettings )
    this.adbeEngine_Label.textAlignment = TextAlign_Right | TextAlign_VertCenter;
 
    this.adbeEngine_Combo = new ComboBox( p2 );
-   this.adbeEngine_Combo.addItem( "SetiAstro AutomaticDBE" );
-   this.adbeEngine_Combo.addItem( "GraXpert" );
+   this.adbeEngine_Combo.addItem( TAP_TR_UI( "SetiAstro AutomaticDBE" ) );
+   this.adbeEngine_Combo.addItem( TAP_TR_UI( "GraXpert" ) );
    this.adbeEngine_Combo.currentItem = initialSettings.adbeEngine;
 
    var adbeEngineRow = new HorizontalSizer;
@@ -30020,8 +30254,8 @@ function AstroTempsAutoProcessingDialog_init( initialSettings )
    this.sharpenEngine_Label.text = TAP_TR_UI( "Engine:" );
    this.sharpenEngine_Label.textAlignment = TextAlign_Right | TextAlign_VertCenter;
    this.sharpenEngine_Combo = new ComboBox( p4 );
-   this.sharpenEngine_Combo.addItem( "BlurXTerminator" );
-   this.sharpenEngine_Combo.addItem( "Cosmic Clarity - SASpro" );
+   this.sharpenEngine_Combo.addItem( TAP_TR_UI( "BlurXTerminator" ) );
+   this.sharpenEngine_Combo.addItem( TAP_TR_UI( "Cosmic Clarity - SASpro" ) );
    this.sharpenEngine_Combo.currentItem = initialSettings.sharpenEngine;
 
    var sharpEngineRow = new HorizontalSizer;
@@ -30126,9 +30360,9 @@ function AstroTempsAutoProcessingDialog_init( initialSettings )
 
    this.ccSharpMode_Label = new Label( p4 ); this.ccSharpMode_Label.text = TAP_TR_UI( "Sharpening Mode:" );
    this.ccSharpMode_Combo = new ComboBox( p4 );
-   this.ccSharpMode_Combo.addItem( "Stellar Only" );
-   this.ccSharpMode_Combo.addItem( "Non-Stellar Only" );
-   this.ccSharpMode_Combo.addItem( "Both" );
+   this.ccSharpMode_Combo.addItem( TAP_TR_UI( "Stellar Only" ) );
+   this.ccSharpMode_Combo.addItem( TAP_TR_UI( "Non-Stellar Only" ) );
+   this.ccSharpMode_Combo.addItem( TAP_TR_UI( "Both" ) );
    TAP_comboSelectText( this.ccSharpMode_Combo, initialSettings.ccSharpMode );
 
    var ccSharpModeRow = new HorizontalSizer;
@@ -30241,8 +30475,8 @@ function AstroTempsAutoProcessingDialog_init( initialSettings )
 
    this.noiseEngine_Label = new Label( p5 ); this.noiseEngine_Label.text = TAP_TR_UI( "Engine:" );
    this.noiseEngine_Combo = new ComboBox( p5 );
-   this.noiseEngine_Combo.addItem( "NoiseXTerminator" );
-   this.noiseEngine_Combo.addItem( "Cosmic Clarity - SASpro Denoise" );
+   this.noiseEngine_Combo.addItem( TAP_TR_UI( "NoiseXTerminator" ) );
+   this.noiseEngine_Combo.addItem( TAP_TR_UI( "Cosmic Clarity - SASpro Denoise" ) );
    this.noiseEngine_Combo.currentItem = initialSettings.noiseEngine;
    var noiseEngineRow = new HorizontalSizer;
    noiseEngineRow.spacing = 6;
@@ -30361,8 +30595,8 @@ function AstroTempsAutoProcessingDialog_init( initialSettings )
 
    this.ccNoiseMode_Label = new Label( p5 ); this.ccNoiseMode_Label.text = TAP_TR_UI( "Denoise Mode:" );
    this.ccNoiseMode_Combo = new ComboBox( p5 );
-   this.ccNoiseMode_Combo.addItem( "Full" );
-   this.ccNoiseMode_Combo.addItem( "Luminance Only" );
+   this.ccNoiseMode_Combo.addItem( TAP_TR_UI( "Full" ) );
+   this.ccNoiseMode_Combo.addItem( TAP_TR_UI( "Luminance Only" ) );
    this.ccNoiseMode_Combo.currentItem = initialSettings.ccNoiseMode == "luminance" ? 1 : 0;
    var ccNoiseModeRow = new HorizontalSizer;
    ccNoiseModeRow.spacing = 6;
@@ -30376,9 +30610,9 @@ function AstroTempsAutoProcessingDialog_init( initialSettings )
 
    this.ccNoiseModel_Label = new Label( p5 ); this.ccNoiseModel_Label.text = TAP_TR_UI( "Denoise Model:" );
    this.ccNoiseModel_Combo = new ComboBox( p5 );
-   this.ccNoiseModel_Combo.addItem( "Standard" );
-   this.ccNoiseModel_Combo.addItem( "Walking Noise" );
-   this.ccNoiseModel_Combo.addItem( "Lite (faster)" );
+   this.ccNoiseModel_Combo.addItem( TAP_TR_UI( "Standard" ) );
+   this.ccNoiseModel_Combo.addItem( TAP_TR_UI( "Walking Noise" ) );
+   this.ccNoiseModel_Combo.addItem( TAP_TR_UI( "Lite (faster)" ) );
    TAP_comboSelectText( this.ccNoiseModel_Combo, initialSettings.ccNoiseModel );
    var ccNoiseModelRow = new HorizontalSizer;
    ccNoiseModelRow.spacing = 6;
@@ -30453,8 +30687,8 @@ function AstroTempsAutoProcessingDialog_init( initialSettings )
 
    this.starEngine_Label = new Label( p6 ); this.starEngine_Label.text = TAP_TR_UI( "Engine:" );
    this.starEngine_Combo = new ComboBox( p6 );
-   this.starEngine_Combo.addItem( "StarXTerminator" );
-   this.starEngine_Combo.addItem( "StarNet2" );
+   this.starEngine_Combo.addItem( TAP_TR_UI( "StarXTerminator" ) );
+   this.starEngine_Combo.addItem( TAP_TR_UI( "StarNet2" ) );
    this.starEngine_Combo.currentItem = initialSettings.starRemovalEngine;
    var starEngineRow = new HorizontalSizer;
    starEngineRow.spacing = 6;
@@ -30549,7 +30783,7 @@ function AstroTempsAutoProcessingDialog_init( initialSettings )
    starnetStride_Label.textAlignment = TextAlign_Right | TextAlign_VertCenter;
 
    this.starnetStride_Combo = new ComboBox( p6 );
-   this.starnetStride_Combo.addItem( "Standard" );
+   this.starnetStride_Combo.addItem( TAP_TR_UI( "Standard" ) );
    this.starnetStride_Combo.currentItem = 0;
    this.starnetStride_Combo.toolTip =
       TAP_TR_UI( "<p>Uses StarNet2's native <b>Standard</b> stride (defStride).</p>" );
@@ -30754,8 +30988,8 @@ function AstroTempsAutoProcessingDialog_init( initialSettings )
    this.starStretchEngine_Label.textAlignment = TextAlign_Right | TextAlign_VertCenter;
 
    this.starStretchEngine_Combo = new ComboBox( p8 );
-   this.starStretchEngine_Combo.addItem( "SetiAstro's NB to RGB Stars" );
-   this.starStretchEngine_Combo.addItem( "SetiAstro's Star Stretch" );
+   this.starStretchEngine_Combo.addItem( TAP_TR_UI( "SetiAstro's NB to RGB Stars" ) );
+   this.starStretchEngine_Combo.addItem( TAP_TR_UI( "SetiAstro's Star Stretch" ) );
    this.starStretchEngine_Combo.currentItem = initialSettings.starStretchEngine;
 
    var starStretchEngineRow = new HorizontalSizer;
@@ -30798,8 +31032,8 @@ function AstroTempsAutoProcessingDialog_init( initialSettings )
    this.imageStretchEngine_Label.textAlignment = TextAlign_Right | TextAlign_VertCenter;
 
    this.imageStretchEngine_Combo = new ComboBox( p9 );
-   this.imageStretchEngine_Combo.addItem( "SetiAstro's Statistical Stretch" );
-   this.imageStretchEngine_Combo.addItem( "Luke's HT Stretch" );
+   this.imageStretchEngine_Combo.addItem( TAP_TR_UI( "SetiAstro's Statistical Stretch" ) );
+   this.imageStretchEngine_Combo.addItem( TAP_TR_UI( "Luke's HT Stretch" ) );
    this.imageStretchEngine_Combo.currentItem =
       initialSettings.imageStretchEngine == IMAGE_STRETCH_ENGINE_LUKE ?
          IMAGE_STRETCH_ENGINE_LUKE : IMAGE_STRETCH_ENGINE_SETIASTRO;
@@ -30858,9 +31092,9 @@ function AstroTempsAutoProcessingDialog_init( initialSettings )
    this.statLumaMode_Label.textAlignment = TextAlign_Right | TextAlign_VertCenter;
 
    this.statLumaMode_Combo = new ComboBox( p9 );
-   this.statLumaMode_Combo.addItem( "rec709" );
-   this.statLumaMode_Combo.addItem( "rec601" );
-   this.statLumaMode_Combo.addItem( "rec2020" );
+   this.statLumaMode_Combo.addItem( TAP_TR_UI( "rec709" ) );
+   this.statLumaMode_Combo.addItem( TAP_TR_UI( "rec601" ) );
+   this.statLumaMode_Combo.addItem( TAP_TR_UI( "rec2020" ) );
    var statLumaModes = [ "rec709", "rec601", "rec2020" ];
    var statLumaIndex = statLumaModes.indexOf( initialSettings.statLumaMode );
    this.statLumaMode_Combo.currentItem = statLumaIndex >= 0 ? statLumaIndex : 0;
@@ -30991,8 +31225,8 @@ function AstroTempsAutoProcessingDialog_init( initialSettings )
    this.dseScaling_Label.textAlignment = TextAlign_Right | TextAlign_VertCenter;
 
    this.dseScaling_Combo = new ComboBox( p10 );
-   this.dseScaling_Combo.addItem( "3x3 Linear Interpolation" );
-   this.dseScaling_Combo.addItem( "5x5 B3 Spline" );
+   this.dseScaling_Combo.addItem( TAP_TR_UI( "3x3 Linear Interpolation" ) );
+   this.dseScaling_Combo.addItem( TAP_TR_UI( "5x5 B3 Spline" ) );
    this.dseScaling_Combo.currentItem = initialSettings.dseScalingFunction;
 
    var dseScalingRow = new HorizontalSizer;
