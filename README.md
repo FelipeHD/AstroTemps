@@ -1,39 +1,33 @@
-# AstroTemps
+# AstroTemps — macOS development
 
-AstroTemps AutoProcessing Tool is a customizable workflow for PixInsight designed to concentrate several commonly used astrophotography processing steps in a single interface.
+This branch contains the macOS adaptation of AstroTemps AutoProcessing Tool and AstroTemps Redux.
 
-## PixInsight Update Repository
+## Target
 
-The permanent stable release channel is the `pixinsight-update-repository` branch. The `master` branch is not used to distribute PixInsight updates.
+- macOS
+- PixInsight 1.9.4
+- AstroTemps v1.3.1
 
-In PixInsight, open:
+## Development policy
 
-`Resources > Updates > Manage Repositories > Add`
+macOS development is isolated from the Windows release branches so platform-specific fixes can be tested without changing the Windows production build.
 
-Add this URL:
+The current macOS adaptation includes:
 
-`https://raw.githubusercontent.com/FelipeHD/AstroTemps/pixinsight-update-repository/updates/`
+- PixInsight-relative ImageSolver support paths.
+- macOS application-bundle resolution for SetiAstroSuitePro / Cosmic Clarity.
+- macOS application-bundle resolution for GraXpert.
+- macOS-specific executable discovery and `python3` handling.
+- macOS host guards in the Complete and Redux scripts.
 
-Then run:
+## Production channel
 
-`Resources > Updates > Check for Updates`
+Validated macOS releases are published from:
 
-Install the AstroTemps package and restart PixInsight if requested.
+`pixinsight-update-repository-macos`
 
-> **Release status:** the repository infrastructure is ready, but the v1.2.0 release package must only be published after the final v1.2.0 source is placed in this branch. Old/stale packages are intentionally not kept available.
+Repository URL for PixInsight:
 
-## Repository layout
+`https://raw.githubusercontent.com/FelipeHD/AstroTemps/pixinsight-update-repository-macos/updates/`
 
-- `AstroTemps_AutoProcessing_Tool.js` — stable release source used to build the PixInsight package.
-- `updates/updates.xri` — PixInsight update-repository manifest generated from the stable source.
-- `updates/AstroTemps-v1.2.0.zip` — installable PixInsight package generated from the stable source.
-- `tools/build_update.py` — reproducible package/manifest builder.
-- `.github/workflows/build-pixinsight-update.yml` — automated release package builder.
-
-## Release policy
-
-Development can happen independently from this branch. Only a version that has been tested and approved should be copied to `pixinsight-update-repository`. Updating the stable source here automatically rebuilds the ZIP and `updates.xri` with a new SHA-1.
-
-## Current release target
-
-AstroTemps AutoProcessing Tool v1.2.0 for PixInsight 1.9.4+ on Windows.
+> Initial macOS builds are not yet validated on every Mac / third-party process combination. Third-party modules must provide their own PixInsight 1.9.4-compatible macOS builds.
