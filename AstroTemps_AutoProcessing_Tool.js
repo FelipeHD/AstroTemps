@@ -10706,7 +10706,6 @@ var TAP_I18N_PT_BR = {
    "Skip Remaining Masks": "Pular Máscaras Restantes",
    "Create Masks && Start": "Criar Máscaras e Iniciar",
    "Create Mask && Continue": "Criar Máscara e Continuar",
-   "Create Mask && Continue": "Criar Máscara && Continuar",
    "Create Mask & Continue": "Criar Máscara e Continuar",
    "Create Masks & Start": "Criar Máscaras e Iniciar",
    "Capture Filter:": "Filtro de Captura:",
@@ -10821,6 +10820,24 @@ var TAP_I18N_PT_BR_REPLACEMENTS = [
    [ "Requirement:", "Requisito:" ],
    [ "must be properly installed and configured on this computer", "deve estar corretamente instalado e configurado neste computador" ],
    [ "for this engine to work.", "para que este mecanismo funcione." ],
+   [ "Adjust the luminosity-mask parameters below.",
+     "Ajuste abaixo os parâmetros da máscara de luminosidade." ],
+   [ "Adjust the Ha/OIII balance and SetiAstro star stretch visually.",
+     "Ajuste visualmente o balanço Ha/OIII e o stretch de estrelas do SetiAstro." ],
+   [ "Adjust the native CosmicPhotons NBN parameters visually, then choose <b>Apply & Continue</b>.",
+     "Ajuste visualmente os parâmetros nativos do CosmicPhotons NBN e escolha <b>Aplicar e Continuar</b>." ],
+   [ "The RangeSelection mask", "A máscara do RangeSelection" ],
+   [ "is already linked to", "já está vinculada a" ],
+   [ "The temporary preview below uses the same mask.",
+     "A prévia temporária abaixo usa a mesma máscara." ],
+   [ "Executing this panel applies native HDRMultiscaleTransform to _work and automatically removes the mask reference.",
+     "Ao executar este painel, o HDRMultiscaleTransform nativo é aplicado à imagem _work e a referência da máscara é removida automaticamente." ],
+   [ "Could not generate the RangeSelection preview.", "Não foi possível gerar a prévia do RangeSelection." ],
+   [ "Could not generate the HDR preview.", "Não foi possível gerar a prévia de HDR." ],
+   [ "Could not generate the Curves preview.", "Não foi possível gerar a prévia de Curvas." ],
+   [ "Could not generate the Star Stretch preview.", "Não foi possível gerar a prévia do Stretch de Estrelas." ],
+   [ "HDRMultiscaleTransform preview failed.", "Falha na prévia do HDRMultiscaleTransform." ],
+   [ "CurvesTransformation preview failed.", "Falha na prévia do CurvesTransformation." ],
    [ "Adjust the", "Ajuste" ],
    [ "The preview is temporary", "A prévia é temporária" ],
    [ "temporary preview", "prévia temporária" ],
@@ -10837,7 +10854,7 @@ var TAP_I18N_PT_BR_REPLACEMENTS = [
    [ "Adjust the luminosity-mask parameters below.",
      "Ajuste abaixo os parâmetros da máscara de luminosidade." ],
    [ "A temporary range-mask window is refreshed automatically; <b>Create Mask & Continue</b> generates the full-resolution mask and links it to _work.",
-     "Uma janela temporária da máscara de seleção de faixa é atualizada automaticamente; <b>Criar Máscara e Continuar</b> gera a máscara em resolução total e a vincula à imagem _work." ],
+     "Uma prévia temporária da máscara de faixa é atualizada automaticamente. <b>Criar Máscara e Continuar</b> gera a máscara em resolução total e a vincula à imagem _work." ],
    [ "OSC dual-band stars-only image:", "Imagem OSC de banda dupla contendo apenas estrelas:" ],
    [ "Adjust the Ha/OIII balance and SetiAstro star stretch visually.",
      "Ajuste visualmente o balanço Ha/OIII e o stretch de estrelas do SetiAstro." ],
@@ -10852,6 +10869,9 @@ var TAP_I18N_PT_BR_REPLACEMENTS = [
    [ "automatically removes the mask reference.", "remove automaticamente a referência da máscara." ],
    [ "one masked CurvesTransformation editor at a time.", "um editor CurvesTransformation com máscara por vez." ],
    [ "Temporary reduced preview of", "Prévia temporária reduzida de" ],
+   [ " with <b>", " com <b>" ],
+   [ "<b>Mask:</b>", "<b>Máscara:</b>" ],
+   [ "Channel:", "Canal:" ],
    [ "linked.", "vinculada." ],
    [ "Apply the current settings", "Aplicar as configurações atuais" ],
    [ "and continue", "e continuar" ],
@@ -10861,6 +10881,14 @@ var TAP_I18N_PT_BR_REPLACEMENTS = [
 
 var TAP_I18N_PT_BR_EXTRA = {
    "Color Boost Amount:": "Reforço de Cor:",
+   "channel": "canal",
+   "Edit curve:": "Editar curva:",
+   "Preview unavailable": "Prévia indisponível",
+   "Execute && Next Mask": "Executar e Próxima Máscara",
+   "AstroTemps - RangeSelection Preview": "AstroTemps - Prévia do RangeSelection",
+   "AstroTemps - HDR Preview": "AstroTemps - Prévia de HDR",
+   "AstroTemps - Curves Preview": "AstroTemps - Prévia de Curvas",
+   "AstroTemps - Star Stretch Preview": "AstroTemps - Prévia do Stretch de Estrelas",
    "SetiAstro's NB to RGB Stars - AstroTemps": "SetiAstro's NB to RGB Stars - AstroTemps",
 
    "Sharpening": "Nitidez",
@@ -16114,13 +16142,13 @@ function TAPMC_addNativeChannelSelector( dialog, row, channelIndex )
    swatch.text = TAP_TR_UI( "" );
    swatch.backgroundColor = TAPMC_channelSwatchColor( info.key );
    swatch.setScaledFixedSize( 10, 10 );
-   swatch.toolTip = info.label + " channel";
+   swatch.toolTip = info.label + " " + TAP_TR_UI( "channel" );
 
    var button = new PushButton( dialog );
    button.text = info.label;
    button.setScaledMinWidth( info.key == "K" ? 52 : 28 );
    button._tapChannelIndex = channelIndex;
-   button.toolTip = "Edit the " + info.label + " curve";
+   button.toolTip = TAP_TR_UI( "Edit curve:" ) + " " + info.label;
    button.onClick = function() { dialog.setActiveChannel( channelIndex ); };
 
    dialog.channelButtons.push( button );
@@ -16274,7 +16302,7 @@ function TAPMC_CurveEditor_init( parent )
       g.drawText( r.x1 - self.font.width( "1.0" ), r.y1 + self.logicalPixelsToPhysical( 18 ), "1.0" );
       g.drawText( 4, r.y1 - self.font.pixelSize/2, "0" );
       g.drawText( 4, r.y0 + self.font.pixelSize, "1.0" );
-      g.drawText( r.x0, 2, self.channelInfo != null ? ("Channel: " + self.channelInfo.label) : "Channel: RGB/K" );
+      g.drawText( r.x0, 2, TAP_TR_UI( "Channel:" ) + " " + ( self.channelInfo != null ? self.channelInfo.label : "RGB/K" ) );
       g.end();
    };
 
@@ -16441,7 +16469,7 @@ function TAPMC_PreviewControl_init( parent )
       else
       {
          g.pen = new Pen( 0xff888888, 1 );
-         g.drawTextRect( 0, 0, this.width, this.height, "Preview unavailable", TextAlign_HorzCenter | TextAlign_VertCenter );
+         g.drawTextRect( 0, 0, this.width, this.height, TAP_TR_UI( "Preview unavailable" ), TextAlign_HorzCenter | TextAlign_VertCenter );
       }
       g.end();
    };
