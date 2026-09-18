@@ -1,7 +1,7 @@
 /*
  * =====================================================================
  * AstroTemps AutoProcessing Tool 
- * Version 1.3.0 - Windows
+ * Version 1.3.1 - Windows
  * PixInsight / PJSR
  *
  * Workflow:
@@ -72,7 +72,7 @@
 
 #ifndef ASTROTEMPS_LIBRARY_MODE
 #feature-id Utilities > AstroTemps AutoProcessing Tool
-#feature-info AstroTemps AutoProcessing Tool v1.3.0.<br/>Windows build for PixInsight 1.9.4+ with embedded ImageSolver V8, native SPCC, RC-Astro/SASpro engines, GraXpert integration, StarNet2, interactive NBN, Lighthouse, and interactive Star Stretch.
+#feature-info AstroTemps AutoProcessing Tool v1.3.1.<br/>Windows build for PixInsight 1.9.4+ with embedded ImageSolver V8, native SPCC, RC-Astro/SASpro engines, GraXpert integration, StarNet2, interactive NBN, Lighthouse, and interactive Star Stretch.
 #endif
 CoreApplication.ensureMinimumVersion( 1, 9, 4 );
 
@@ -10609,7 +10609,7 @@ function runCosmicClarityViaSasproCLI( selectedView )
 }
 
 
-var VERSION = "1.3.0";
+var VERSION = "1.3.1";
 
 
 var ENGINE_RCASTRO = 0;
@@ -14560,6 +14560,13 @@ function TAPRH_RangeDialog_init( workView )
    this.previewSource = null;
    this.previewMask = null;
    this.previewTimer = null;
+   // RangeSelection is a native process that yields to the PixInsight event loop.
+   // While it is running, CoreApplication.processEvents() can dispatch additional
+   // slider events. Guard preview generation so a second native RangeSelection
+   // instance can never start before the current one has finished.
+   this.previewBusy = false;
+   this.previewQueued = false;
+   this.previewClosing = false;
    this.updatingLinkedLimits = false;
    this.cfg = TAPRH_defaultRangeSettings();
 
@@ -14648,49 +14655,144 @@ function TAPRH_RangeDialog_init( workView )
       return self.cfg;
    };
 
-   this.closePreview = function()
+   this.stopPreviewTimer = function()
    {
       if ( self.previewTimer != null )
       {
-         self.previewTimer.stop();
+         try { self.previewTimer.stop(); } catch ( e0 ) {}
          self.previewTimer = null;
       }
+   };
+
+   this.closePreviewViews = function()
+   {
+      // Close the generated mask first because it depends on the temporary
+      // reduced source view used by the native RangeSelection process.
       TAPIC_closeView( self.previewMask );
       TAPIC_closeView( self.previewSource );
       self.previewMask = null;
       self.previewSource = null;
    };
 
+   this.closePreview = function()
+   {
+      self.previewQueued = false;
+      self.stopPreviewTimer();
+      self.closePreviewViews();
+   };
+
+   this.setPreviewBusyUI = function( busy )
+   {
+      // Sliders intentionally remain enabled. Their changes are coalesced into
+      // one queued refresh, while actions that could close/create image windows
+      // are blocked until the native preview operation has returned.
+      self.refresh.enabled = !busy;
+      self.continueButton.enabled = !busy;
+      self.skip.enabled = !busy;
+      self.cancelButton.enabled = !busy;
+   };
+
    this.updatePreview = function()
    {
-      self.closePreview();
+      if ( self.previewClosing )
+         return;
+
+      if ( self.previewBusy )
+      {
+         self.previewQueued = true;
+         return;
+      }
+
+      self.previewBusy = true;
+      self.previewQueued = false;
+      self.stopPreviewTimer();
+      self.setPreviewBusyUI( true );
+
       try
       {
          self.readSettings();
-         self.previewSource = TAPIC_cloneReduced( workView, 4, "AstroTemps_Range_preview_src" );
+         self.closePreviewViews();
+
+         self.previewSource = TAPIC_cloneReduced(
+            workView, 4, "AstroTemps_Range_preview_src" );
+
          self.previewMask = TAPRH_createRangeMask(
             self.previewSource, self.cfg, "AstroTemps_Range_Preview", true );
+
+         // A close/finalize request cannot normally arrive because the action
+         // buttons are disabled while busy, but keep this guard for safety if
+         // the dialog is closed by the window manager during processEvents().
+         if ( self.previewClosing )
+         {
+            self.closePreviewViews();
+            return;
+         }
+
          TAPIC_placePreviewWindow( self.previewMask, self );
       }
       catch ( e )
       {
-         self.closePreview();
-         new MessageBox(
-            "Could not generate the RangeSelection preview.\n\n" + TAP_errorText( e ),
-            "AstroTemps - RangeSelection Preview", StdIcon_Error, StdButton_Ok
-         ).execute();
+         self.closePreviewViews();
+         if ( !self.previewClosing )
+         {
+            new MessageBox(
+               "Could not generate the RangeSelection preview.\n\n" + TAP_errorText( e ),
+               "AstroTemps - RangeSelection Preview", StdIcon_Error, StdButton_Ok
+            ).execute();
+         }
+      }
+      finally
+      {
+         self.previewBusy = false;
+
+         if ( !self.previewClosing )
+         {
+            self.setPreviewBusyUI( false );
+
+            // Slider/check-box changes received while RangeSelection or one of
+            // the processEvents() calls was active are collapsed into a single
+            // new preview using the latest control values.
+            if ( self.previewQueued )
+            {
+               self.previewQueued = false;
+               self.schedulePreview();
+            }
+         }
       }
    };
 
    this.schedulePreview = function()
    {
-      if ( self.previewTimer != null ) self.previewTimer.stop();
+      if ( self.previewClosing )
+         return;
+
+      // Never arm a Timer while the native RangeSelection preview is running.
+      // Otherwise the timer can fire from CoreApplication.processEvents() and
+      // re-enter TAPRH_createRangeMask(), which is the source of the observed
+      // C0000005/invalid-memory-read failure when sliders are moved rapidly.
+      if ( self.previewBusy )
+      {
+         self.previewQueued = true;
+         return;
+      }
+
+      self.stopPreviewTimer();
       self.previewTimer = new Timer;
       self.previewTimer.interval = 0.30;
       self.previewTimer.singleShot = true;
       self.previewTimer.onTimeout = function()
       {
          self.previewTimer = null;
+
+         if ( self.previewClosing )
+            return;
+
+         if ( self.previewBusy )
+         {
+            self.previewQueued = true;
+            return;
+         }
+
          self.updatePreview();
       };
       self.previewTimer.start();
@@ -14725,25 +14827,49 @@ function TAPRH_RangeDialog_init( workView )
    this.screening.onCheck = function() { self.schedulePreview(); };
    this.lightness.onCheck = function() { self.schedulePreview(); };
    this.invert.onCheck = function() { self.schedulePreview(); };
-   this.refresh.onClick = function() { self.updatePreview(); };
+   this.refresh.onClick = function()
+   {
+      if ( !self.previewBusy && !self.previewClosing )
+         self.updatePreview();
+   };
 
    this.continueButton.onClick = function()
    {
+      if ( self.previewBusy || self.previewClosing )
+         return;
+
       try
       {
          self.readSettings();
+
+         // From this point onward no automatic preview may be scheduled. This
+         // also protects the full-resolution RangeSelection call below, whose
+         // own processEvents() must not dispatch a competing preview operation.
+         self.previewClosing = true;
          self.closePreview();
-         self.maskView = TAPRH_createRangeMask( workView, self.cfg, "RangeMask_HDR", true );
+         self.setPreviewBusyUI( true );
+
+         self.maskView = TAPRH_createRangeMask(
+            workView, self.cfg, "RangeMask_HDR", true );
          self.ok();
       }
       catch ( e )
       {
-         new MessageBox( TAP_errorText( e ), "RangeSelection", StdIcon_Error, StdButton_Ok ).execute();
+         // Keep the dialog usable if full-resolution mask generation fails.
+         self.previewClosing = false;
+         self.setPreviewBusyUI( false );
+         new MessageBox(
+            TAP_errorText( e ), "RangeSelection", StdIcon_Error, StdButton_Ok
+         ).execute();
+         self.schedulePreview();
       }
    };
 
    this.skip.onClick = function()
    {
+      if ( self.previewBusy || self.previewClosing )
+         return;
+      self.previewClosing = true;
       self.closePreview();
       self.skipped = true;
       self.ok();
@@ -14751,6 +14877,9 @@ function TAPRH_RangeDialog_init( workView )
 
    this.cancelButton.onClick = function()
    {
+      if ( self.previewBusy || self.previewClosing )
+         return;
+      self.previewClosing = true;
       self.closePreview();
       self.cancel();
    };
@@ -28897,6 +29026,12 @@ function runWorkflow( sourceView, s )
       console.warningln( "Processing directly on " + workView.id );
    }
 
+   // Register the current working image with the fail-safe layer. If an
+   // unexpected JavaScript/PJSR exception occurs later, recovery will preserve
+   // this image and return focus to it instead of leaving the workflow UI in
+   // an indeterminate state.
+   TAP_RUNTIME_GUARD.workViewId = workView.id;
+
    var order = s.customizeOrder
       ? TAP_normalizeExecutionOrder( s.executionOrder )
       : TAP_DEFAULT_EXECUTION_ORDER.slice( 0 );
@@ -28924,6 +29059,7 @@ function runWorkflow( sourceView, s )
       var stageId = order[i];
       if ( TAP_isStageEnabled( stageId, s ) )
       {
+         TAP_RUNTIME_GUARD.currentStage = stageId;
          console.writeln( "" );
          console.writeln(
             "Execution position " + ( i + 1 ) + ": " + TAP_STAGE_LABELS[stageId]
@@ -28939,6 +29075,7 @@ function runWorkflow( sourceView, s )
             if ( TAP_promptMissingComponent( missingComponent ) )
             {
                console.warningln( "Stage skipped by user: " + TAP_STAGE_LABELS[stageId] );
+               TAP_RUNTIME_GUARD.currentStage = "";
                continue;
             }
 
@@ -28962,6 +29099,7 @@ function runWorkflow( sourceView, s )
                if ( TAP_promptMissingComponent( runtimeMissing ) )
                {
                   console.warningln( "Stage skipped by user: " + TAP_STAGE_LABELS[stageId] );
+                  TAP_RUNTIME_GUARD.currentStage = "";
                   continue;
                }
 
@@ -28970,6 +29108,8 @@ function runWorkflow( sourceView, s )
 
             throw stageError;
          }
+
+         TAP_RUNTIME_GUARD.currentStage = "";
       }
    }
 
@@ -31371,10 +31511,231 @@ var AstroTempsAutoProcessingDialog = class extends Dialog
    }
 };
 
-function executeWithErrorHandling( target, settings )
+/*
+ * -----------------------------------------------------------------------------
+ * Workflow fail-safe guard
+ * -----------------------------------------------------------------------------
+ *
+ * This layer is intentionally conservative. It does not try to continue after
+ * an unknown workflow exception, because later stages may depend on outputs that
+ * were not created. Instead it:
+ *
+ *  - records the currently executing stage and working image;
+ *  - catches unexpected JavaScript/PJSR exceptions at the workflow boundary;
+ *  - closes only AstroTemps transient preview windows created during this run;
+ *  - preserves the real _work image and any completed user-visible outputs;
+ *  - returns focus to the working/original image and pumps the UI event queue;
+ *  - restores Console abort state and gives control back to PixInsight.
+ *
+ * Native process crashes inside PixInsight/PCL cannot be recovered reliably by
+ * JavaScript. This guard is for recoverable script/runtime exceptions and stale
+ * transient UI state, and prevents those failures from propagating out of the
+ * AstroTemps entry point.
+ */
+var TAP_RUNTIME_GUARD = {
+   active: false,
+   recovering: false,
+   currentStage: "",
+   sourceViewId: "",
+   workViewId: "",
+   baselineWindowIds: []
+};
+
+function TAP_runtimeWindowIds()
 {
+   var ids = [];
    try
    {
+      var windows = ImageWindow.windows;
+      for ( var i = 0; i < windows.length; ++i )
+      {
+         var w = windows[i];
+         if ( w != null && !w.isNull && w.mainView != null && !w.mainView.isNull )
+            ids.push( w.mainView.id );
+      }
+   }
+   catch ( e ) {}
+   return ids;
+}
+
+function TAP_runtimeGuardBegin( target )
+{
+   TAP_RUNTIME_GUARD.active = true;
+   TAP_RUNTIME_GUARD.recovering = false;
+   TAP_RUNTIME_GUARD.currentStage = "";
+   TAP_RUNTIME_GUARD.sourceViewId = "";
+   TAP_RUNTIME_GUARD.workViewId = "";
+   TAP_RUNTIME_GUARD.baselineWindowIds = TAP_runtimeWindowIds();
+
+   try
+   {
+      if ( target != null && !target.isNull )
+         TAP_RUNTIME_GUARD.sourceViewId = target.id;
+   }
+   catch ( e ) {}
+}
+
+function TAP_runtimeGuardEnd()
+{
+   TAP_RUNTIME_GUARD.active = false;
+   TAP_RUNTIME_GUARD.recovering = false;
+   TAP_RUNTIME_GUARD.currentStage = "";
+   TAP_RUNTIME_GUARD.sourceViewId = "";
+   TAP_RUNTIME_GUARD.workViewId = "";
+   TAP_RUNTIME_GUARD.baselineWindowIds = [];
+}
+
+function TAP_runtimeIsTransientWindowId( id )
+{
+   id = String( id );
+   var prefixes = [
+      "AstroTemps_Range_preview_src",
+      "AstroTemps_Range_Preview",
+      "AstroTemps_HDR_preview",
+      "AstroTemps_Curves_preview",
+      "AstroTemps_NBtoRGB_preview_src",
+      "AstroTemps_NBtoRGB_Preview",
+      "AstroTemps_StarStretch_preview_src",
+      "AstroTemps_StarStretch_Preview",
+      "TAP_NBN_Base",
+      "TAP_NBN_Preview"
+   ];
+
+   for ( var i = 0; i < prefixes.length; ++i )
+      if ( id.indexOf( prefixes[i] ) == 0 )
+         return true;
+
+   return false;
+}
+
+function TAP_runtimeFindViewById( id )
+{
+   if ( id == null || String( id ).length == 0 )
+      return null;
+
+   try
+   {
+      var w = ImageWindow.windowById( String( id ) );
+      if ( w != null && !w.isNull && w.mainView != null && !w.mainView.isNull )
+         return w.mainView;
+   }
+   catch ( e ) {}
+
+   return null;
+}
+
+function TAP_runtimeCloseTransientWindows()
+{
+   var baseline = TAP_RUNTIME_GUARD.baselineWindowIds || [];
+
+   try
+   {
+      var windows = ImageWindow.windows.slice( 0 );
+      for ( var i = 0; i < windows.length; ++i )
+      {
+         var w = windows[i];
+         if ( w == null || w.isNull || w.mainView == null || w.mainView.isNull )
+            continue;
+
+         var id = w.mainView.id;
+         if ( baseline.indexOf( id ) >= 0 )
+            continue;
+
+         if ( TAP_runtimeIsTransientWindowId( id ) )
+         {
+            try
+            {
+               w.forceClose();
+               console.warningln( "Fail-safe cleanup closed transient window: " + id );
+            }
+            catch ( eClose ) {}
+         }
+      }
+   }
+   catch ( e ) {}
+}
+
+function TAP_emergencyWorkflowRecovery( error )
+{
+   if ( TAP_RUNTIME_GUARD.recovering )
+      return;
+
+   TAP_RUNTIME_GUARD.recovering = true;
+
+   try
+   {
+      try { console.show(); } catch ( eConsole ) {}
+
+      console.warningln( "" );
+      console.warningln( "*** ASTROTEMPS FAIL-SAFE RECOVERY ***" );
+      if ( TAP_RUNTIME_GUARD.currentStage.length > 0 )
+      {
+         var stageLabel = TAP_STAGE_LABELS[TAP_RUNTIME_GUARD.currentStage];
+         console.warningln(
+            "Interrupted stage: " +
+            ( stageLabel != null ? stageLabel : TAP_RUNTIME_GUARD.currentStage )
+         );
+      }
+      console.warningln( "Reason: " + TAP_errorText( error ) );
+
+      TAP_runtimeCloseTransientWindows();
+
+      // Prefer the actual working image. If it was never created/resolved, bring
+      // the original target back to the front instead.
+      var focusView = TAP_runtimeFindViewById( TAP_RUNTIME_GUARD.workViewId );
+      if ( focusView == null )
+         focusView = TAP_runtimeFindViewById( TAP_RUNTIME_GUARD.sourceViewId );
+
+      if ( focusView != null )
+      {
+         try { focusView.window.show(); } catch ( eShow ) {}
+         try { focusView.window.bringToFront(); } catch ( eFront ) {}
+      }
+
+      // Let pending UI events complete only after transient preview resources
+      // have been closed. Every call is isolated so recovery itself cannot
+      // propagate another exception.
+      try { CoreApplication.processEvents(); } catch ( eEvents1 ) {}
+      try { TAP_collectGarbage( "Fail-safe recovery" ); } catch ( eGC ) {}
+      try { CoreApplication.processEvents(); } catch ( eEvents2 ) {}
+
+      console.warningln( "Fail-safe recovery completed. Control returned to PixInsight." );
+      console.warningln( "" );
+   }
+   catch ( recoveryError )
+   {
+      try
+      {
+         console.criticalln(
+            "Fail-safe recovery encountered an additional error: " +
+            TAP_errorText( recoveryError )
+         );
+      }
+      catch ( eLog ) {}
+   }
+   finally
+   {
+      TAP_RUNTIME_GUARD.recovering = false;
+   }
+}
+
+function executeWithErrorHandling( target, settings )
+{
+   var previousAbortEnabled = false;
+   var haveAbortState = false;
+
+   TAP_runtimeGuardBegin( target );
+
+   try
+   {
+      try
+      {
+         previousAbortEnabled = console.abortEnabled;
+         haveAbortState = true;
+         console.abortEnabled = true;
+      }
+      catch ( eAbortSetup ) {}
+
       var result = runWorkflow( target, settings );
       if ( result.status == "COMPLETE" )
       {
@@ -31388,6 +31749,11 @@ function executeWithErrorHandling( target, settings )
    }
    catch ( error )
    {
+      // Always restore the UI/runtime to a known safe state before presenting
+      // the error. Unknown failures stop the workflow; they are never silently
+      // skipped because subsequent stages may depend on the failed stage.
+      TAP_emergencyWorkflowRecovery( error );
+
       console.show();
 
       if ( error && error.tapUserStop )
@@ -31398,19 +31764,44 @@ function executeWithErrorHandling( target, settings )
          return;
       }
 
+      var stageText = "";
+      if ( TAP_RUNTIME_GUARD.currentStage.length > 0 )
+      {
+         var stageLabel = TAP_STAGE_LABELS[TAP_RUNTIME_GUARD.currentStage];
+         stageText = "\n\nStage: " +
+            ( stageLabel != null ? stageLabel : TAP_RUNTIME_GUARD.currentStage );
+      }
+
       console.criticalln( "" );
       console.criticalln( "*** AUTOPROCESSING ERROR ***" );
       console.criticalln( TAP_errorText( error ) );
       console.criticalln( "" );
       ( new MessageBox(
-         "The workflow was interrupted.\n\n" + TAP_errorText( error ) +
-         "\n\nCheck the Process Console for additional information.",
+         "The workflow was interrupted safely." + stageText + "\n\n" +
+         TAP_errorText( error ) +
+         "\n\nAstroTemps closed temporary preview resources and returned control to PixInsight. " +
+         "Your working image has been preserved at the last completed state.\n\n" +
+         "Check the Process Console for additional information.",
          "AstroTemps AutoProcessing Tool",
          StdIcon_Error,
          StdButton_Ok
       ) ).execute();
    }
+   finally
+   {
+      try
+      {
+         if ( haveAbortState )
+            console.abortEnabled = previousAbortEnabled;
+         else
+            console.abortEnabled = false;
+      }
+      catch ( eAbortRestore ) {}
+
+      TAP_runtimeGuardEnd();
+   }
 }
+
 function main()
 {
    if ( !IS_WIN )
@@ -31468,6 +31859,44 @@ function main()
       return;
    }
 }
+function TAP_safeMain()
+{
+   try
+   {
+      main();
+   }
+   catch ( error )
+   {
+      // Covers errors that happen outside runWorkflow(), e.g. settings/dialog
+      // construction. Workflow errors are already handled by
+      // executeWithErrorHandling() and do not propagate here.
+      try { TAP_emergencyWorkflowRecovery( error ); } catch ( eRecovery ) {}
+      try { console.show(); } catch ( eConsole ) {}
+
+      try
+      {
+         console.criticalln( "" );
+         console.criticalln( "*** ASTROTEMPS TOP-LEVEL ERROR ***" );
+         console.criticalln( TAP_errorText( error ) );
+         console.criticalln( "" );
+      }
+      catch ( eLog ) {}
+
+      try
+      {
+         ( new MessageBox(
+            "AstroTemps encountered an unexpected script error and stopped safely.\n\n" +
+            TAP_errorText( error ) +
+            "\n\nControl has been returned to PixInsight. Check the Process Console for details.",
+            "AstroTemps AutoProcessing Tool",
+            StdIcon_Error,
+            StdButton_Ok
+         ) ).execute();
+      }
+      catch ( eMessage ) {}
+   }
+}
+
 #ifndef ASTROTEMPS_LIBRARY_MODE
-main();
+TAP_safeMain();
 #endif
