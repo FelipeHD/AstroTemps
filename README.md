@@ -1,18 +1,16 @@
-# AstroTemps
+# AstroTemps — macOS release channel
 
-AstroTemps AutoProcessing Tool is a customizable workflow for PixInsight designed to concentrate several commonly used astrophotography processing steps in a single interface.
+This branch is the dedicated production/update channel for the macOS build of AstroTemps.
 
-## PixInsight Update Repository
+## PixInsight repository URL
 
-The permanent stable release channel is the `pixinsight-update-repository` branch. The `master` branch is not used to distribute PixInsight updates.
-
-In PixInsight, open:
+In PixInsight 1.9.4, open:
 
 `Resources > Updates > Manage Repositories > Add`
 
-Add this URL:
+Add:
 
-`https://raw.githubusercontent.com/FelipeHD/AstroTemps/pixinsight-update-repository/updates/`
+`https://raw.githubusercontent.com/FelipeHD/AstroTemps/pixinsight-update-repository-macos/updates/`
 
 Then run:
 
@@ -20,20 +18,23 @@ Then run:
 
 Install the AstroTemps package and restart PixInsight if requested.
 
-> **Release status:** the repository infrastructure is ready, but the v1.2.0 release package must only be published after the final v1.2.0 source is placed in this branch. Old/stale packages are intentionally not kept available.
+## Included scripts
 
-## Repository layout
+- AstroTemps AutoProcessing Tool
+- AstroTemps Redux
 
-- `AstroTemps_AutoProcessing_Tool.js` — stable release source used to build the PixInsight package.
-- `updates/updates.xri` — PixInsight update-repository manifest generated from the stable source.
-- `updates/AstroTemps-v1.2.0.zip` — installable PixInsight package generated from the stable source.
-- `tools/build_update.py` — reproducible package/manifest builder.
-- `.github/workflows/build-pixinsight-update.yml` — automated release package builder.
+## Compatibility
 
-## Release policy
+- macOS
+- PixInsight 1.9.4
+- Current release: v1.3.1
 
-Development can happen independently from this branch. Only a version that has been tested and approved should be copied to `pixinsight-update-repository`. Updating the stable source here automatically rebuilds the ZIP and `updates.xri` with a new SHA-1.
+The macOS release is maintained separately from the Windows production channel. Platform-specific changes in this branch do not modify the Windows release branch or its update repository.
 
-## Current release target
+The initial macOS adaptation has been statically audited, but it has not yet been validated across every real Mac / third-party process combination. Third-party modules and external applications must provide their own PixInsight 1.9.4-compatible macOS builds.
 
-AstroTemps AutoProcessing Tool v1.2.0 for PixInsight 1.9.4+ on Windows.
+## Windows release channel
+
+Windows users should continue using:
+
+`https://raw.githubusercontent.com/FelipeHD/AstroTemps/pixinsight-update-repository/updates/`
