@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - development
+      - macos-development
     paths:
       - AstroTemps_AutoProcessing_Tool.js
       - AstroTemps_Redux.js

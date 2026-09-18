@@ -6,7 +6,7 @@ This branch contains the macOS adaptation of AstroTemps AutoProcessing Tool and 
 
 - macOS
 - PixInsight 1.9.4
-- AstroTemps v1.3.1
+- AstroTemps v1.3.5
 
 ## Development policy
 
