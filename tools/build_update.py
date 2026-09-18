@@ -60,7 +60,7 @@ def release_date_for(version: str) -> str:
     xri_path = UPDATES / "updates.xri"
     if xri_path.exists():
         text = xri_path.read_text(encoding="utf-8", errors="ignore")
-        version_match = re.search(r"AstroTemps-v(\d+\.\d+\.\d+)\.zip", text)
+        version_match = re.search(r"AstroTemps-macOS-v(\d+\.\d+\.\d+)\.zip", text)
         date_match = re.search(r'releaseDate="(\d{8})"', text)
         if version_match and date_match and version_match.group(1) == version:
             return date_match.group(1)
@@ -78,12 +78,15 @@ def zip_info_for(arcname: str, release_date: str) -> zipfile.ZipInfo:
 
 def build_zip(version: str, release_date: str) -> Path:
     UPDATES.mkdir(parents=True, exist_ok=True)
-    zip_name = f"AstroTemps-v{version}.zip"
+    zip_name = f"AstroTemps-macOS-v{version}.zip"
     out = UPDATES / zip_name
 
-    for stale in UPDATES.glob("AstroTemps-v*.zip"):
-        if stale.name != zip_name:
-            stale.unlink()
+    # This branch is a dedicated macOS channel. Remove inherited/stale
+    # AstroTemps packages from both the Windows and macOS naming schemes.
+    for pattern in ("AstroTemps-v*.zip", "AstroTemps-macOS-v*.zip"):
+        for stale in UPDATES.glob(pattern):
+            if stale.name != zip_name:
+                stale.unlink()
 
     with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
         for source, arcname, _pattern, _variable_name in SOURCES:
@@ -97,13 +100,13 @@ def build_xri(zip_path: Path, version: str, release_date: str) -> Path:
     xri = f'''<?xml version="1.0" encoding="UTF-8"?>
 <xri version="1.0">
    <description>
-      <p>AstroTemps AutoProcessing Tool repository by Felipe Temponi.</p>
+      <p>AstroTemps AutoProcessing Tool macOS repository by Felipe Temponi.</p>
    </description>
    <platform os="all" arch="noarch" version="1.9.4:1.9.99">
       <package fileName="{zip_path.name}" sha1="{sha1}" type="script" releaseDate="{release_date}">
-         <title>AstroTemps AutoProcessing Tool v{version}</title>
+         <title>AstroTemps AutoProcessing Tool v{version} - macOS</title>
          <description>
-            <p>Automated and configurable astrophotography processing workflow for PixInsight, including AstroTemps Redux.</p>
+            <p>macOS build of AstroTemps AutoProcessing Tool and AstroTemps Redux for PixInsight 1.9.4.</p>
          </description>
       </package>
    </platform>
