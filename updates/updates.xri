@@ -4,10 +4,10 @@
       <p>AstroTemps AutoProcessing Tool repository by Felipe Temponi.</p>
    </description>
    <platform os="all" arch="noarch" version="1.9.4:1.9.99">
-      <package fileName="AstroTemps-v1.2.0.zip" sha1="32afd6089490f9f3e9efe0926b51777c0ae4eaf0" type="script" releaseDate="20260916">
-         <title>AstroTemps AutoProcessing Tool v1.2.0</title>
+      <package fileName="AstroTemps-v1.3.0.zip" sha1="1d39eba0a86874f8840b20804327aa275a58fcca" type="script" releaseDate="20260918">
+         <title>AstroTemps AutoProcessing Tool v1.3.0</title>
          <description>
-            <p>Automated and configurable astrophotography processing workflow for PixInsight.</p>
+            <p>Automated and configurable astrophotography processing workflow for PixInsight, including AstroTemps Redux.</p>
          </description>
       </package>
    </platform>
