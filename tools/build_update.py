@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Dedicated macOS release channel.
 from __future__ import annotations
 
 from datetime import datetime, timezone
