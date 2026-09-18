@@ -1,7 +1,7 @@
 /*
  * =====================================================================
  * AstroTemps Redux
- * Version 1.3.0 - Windows
+ * Version 1.3.1 - Windows
  * PixInsight / PJSR
  *
  * One-click opinionated workflow distributed alongside the full
@@ -17,9 +17,9 @@
 #include "AstroTemps_AutoProcessing_Tool.js"
 
 #feature-id Utilities > AstroTemps Redux
-#feature-info AstroTemps Redux v1.3.0.<br/>One-click opinionated processing workflow for PixInsight 1.9.4+.
+#feature-info AstroTemps Redux v1.3.1.<br/>One-click opinionated processing workflow for PixInsight 1.9.4+.
 
-var REDUX_VERSION = "1.3.0";
+var REDUX_VERSION = "1.3.1";
 var TAPR_TITLE = "AstroTemps Redux";
 
 function TAPR_getTargetView()
@@ -242,6 +242,82 @@ var TAPR_SPCCDialog = class extends Dialog
       "<p>Select the capture filter used for this image. Redux maps the preset " +
       "to the SPCC R/G/B transmission curves automatically.</p>";
 
+   // Support the Project -------------------------------------------------
+   this.support_Group = new GroupBox( this );
+   this.support_Group.title = "Support the Project";
+   this.support_Group.setScaledMinHeight( 170 );
+
+   this.support_Text = new Label( this.support_Group );
+   this.support_Text.useRichText = true;
+   this.support_Text.wordWrapping = true;
+   this.support_Text.text =
+      "If you find AstroTemps Redux useful and would like to support its development, " +
+      "consider buying me a coffee.";
+
+   this.coffee_Link = new Label( this.support_Group );
+   this.coffee_Link.useRichText = true;
+   this.coffee_Link.wordWrapping = false;
+   this.coffee_Link.frameStyle = FrameStyle_Sunken;
+   this.coffee_Link.textAlignment = TextAlign_Left | TextAlign_VertCenter;
+   this.coffee_Link.setScaledMinHeight( 36 );
+   this.coffee_Link.text =
+      "<span style=\"color:#67a9ff\"><b>&nbsp;&nbsp;buymeacoffee.com/temponi</b></span>";
+   this.coffee_Link.toolTip =
+      "<p>Open https://www.buymeacoffee.com/temponi in your default browser.</p>";
+   try
+   {
+      this.coffee_Link.cursor = new Cursor( StdCursor_PointingHand );
+   }
+   catch ( eCoffeeCursor ) {}
+   this.coffee_Link.onMousePress = function( x, y, button, buttonState, modifiers )
+   {
+      if ( button == MouseButton_Left )
+         lighthouseOpenUrl( "https://www.buymeacoffee.com/temponi" );
+   };
+
+   var supportLeftSizer = new VerticalSizer;
+   supportLeftSizer.margin = 10;
+   supportLeftSizer.spacing = 8;
+   supportLeftSizer.add( this.support_Text );
+   supportLeftSizer.addStretch();
+   supportLeftSizer.add( this.coffee_Link );
+   this.support_Group.sizer = supportLeftSizer;
+
+   // PIX — Brazil --------------------------------------------------------
+   this.pix_Group = new GroupBox( this );
+   this.pix_Group.title = "PIX — Brazil";
+   this.pix_Group.setScaledMinHeight( 170 );
+
+   this.pix_Text = new Label( this.pix_Group );
+   this.pix_Text.useRichText = true;
+   this.pix_Text.wordWrapping = true;
+   this.pix_Text.text =
+      "Brazilian users who would like to support AstroTemps Redux via PIX can use " +
+      "the QR Code shown here.";
+
+   this.pix_QR = new TAPInfo_PIXQRControl( this.pix_Group );
+
+   var pixTextColumn = new VerticalSizer;
+   pixTextColumn.spacing = 0;
+   pixTextColumn.add( this.pix_Text );
+   pixTextColumn.addStretch();
+
+   var pixQRColumn = new VerticalSizer;
+   pixQRColumn.spacing = 0;
+   pixQRColumn.addStretch();
+   pixQRColumn.add( this.pix_QR );
+
+   this.pix_Group.sizer = new HorizontalSizer;
+   this.pix_Group.sizer.margin = 10;
+   this.pix_Group.sizer.spacing = 10;
+   this.pix_Group.sizer.add( pixTextColumn, 100 );
+   this.pix_Group.sizer.add( pixQRColumn );
+
+   var supportRow = new HorizontalSizer;
+   supportRow.spacing = 10;
+   supportRow.add( this.support_Group, 100 );
+   supportRow.add( this.pix_Group, 100 );
+
    this.filter_Label = new Label( this );
    this.filter_Label.text = "Capture Filter:";
    this.filter_Label.textAlignment = TextAlign_Right | TextAlign_VertCenter;
@@ -298,10 +374,11 @@ var TAPR_SPCCDialog = class extends Dialog
    this.sizer.spacing = 10;
    this.sizer.add( this.info_Label );
    this.sizer.add( filterRow );
+   this.sizer.add( supportRow );
    this.sizer.add( buttonRow );
 
    this.adjustToContents();
-   this.setFixedWidth( Math.max( this.width, 520 ) );
+   this.setFixedWidth( Math.max( this.width, 700 ) );
    }
 };
 
