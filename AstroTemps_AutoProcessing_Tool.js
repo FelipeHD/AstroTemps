@@ -1,7 +1,7 @@
 /*
  * =====================================================================
  * AstroTemps AutoProcessing Tool 
- * Version 1.3.4 - Windows
+ * Version 1.3.5 - Windows
  * PixInsight / PJSR
  *
  * Workflow:
@@ -72,7 +72,7 @@
 
 #ifndef ASTROTEMPS_LIBRARY_MODE
 #feature-id Utilities > AstroTemps AutoProcessing Tool
-#feature-info AstroTemps AutoProcessing Tool v1.3.4.<br/>Windows build for PixInsight 1.9.4+ with embedded ImageSolver V8, native SPCC, RC-Astro/SASpro engines, GraXpert integration, StarNet2, interactive NBN, Lighthouse, and interactive Star Stretch.
+#feature-info AstroTemps AutoProcessing Tool v1.3.5.<br/>Windows build for PixInsight 1.9.4+ with embedded ImageSolver V8, native SPCC, RC-Astro/SASpro engines, GraXpert integration, StarNet2, interactive NBN, Lighthouse, and interactive Star Stretch.
 #endif
 CoreApplication.ensureMinimumVersion( 1, 9, 4 );
 
@@ -10609,7 +10609,7 @@ function runCosmicClarityViaSasproCLI( selectedView )
 }
 
 
-var VERSION = "1.3.4";
+var VERSION = "1.3.5";
 
 /*
  * -----------------------------------------------------------------------------
