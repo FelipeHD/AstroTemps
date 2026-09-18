@@ -1,7 +1,7 @@
 /*
  * =====================================================================
  * AstroTemps Redux
- * Version 1.3.1 - Windows
+ * Version 1.3.1 - macOS
  * PixInsight / PJSR
  *
  * One-click opinionated workflow distributed alongside the full
@@ -17,7 +17,7 @@
 #include "AstroTemps_AutoProcessing_Tool.js"
 
 #feature-id Utilities > AstroTemps Redux
-#feature-info AstroTemps Redux v1.3.1.<br/>One-click opinionated processing workflow for PixInsight 1.9.4+.
+#feature-info AstroTemps Redux v1.3.1.<br/>macOS one-click opinionated processing workflow for PixInsight 1.9.4.
 
 var REDUX_VERSION = "1.3.1";
 var TAPR_TITLE = "AstroTemps Redux";
@@ -924,6 +924,17 @@ function TAPR_runWorkflow( workView, choice )
 function TAPR_main()
 {
    console.show();
+
+   if ( !IS_MAC )
+   {
+      ( new MessageBox(
+         "This is the macOS build of AstroTemps Redux.\n\nUse this build on Apple systems running macOS.",
+         TAPR_TITLE,
+         StdIcon_Error,
+         StdButton_Ok
+      ) ).execute();
+      return;
+   }
    console.writeln( "<end><cbr><br>============================================================" );
    console.noteln( "AstroTemps Redux v" + REDUX_VERSION );
    console.writeln( "============================================================" );
