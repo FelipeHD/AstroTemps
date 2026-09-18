@@ -1,7 +1,7 @@
 /*
  * =====================================================================
- * AstroTemps AutoProcessing Tool
- * Version 1.2.0 - Windows
+ * AstroTemps AutoProcessing Tool 
+ * Version 1.3.0 - Windows
  * PixInsight / PJSR
  *
  * Workflow:
@@ -66,10 +66,14 @@
  * See the integrated engine header for SetiAstro attribution and CC BY-NC 4.0 notice.
  * =====================================================================
  */
+#ifndef ASTROTEMPS_LIBRARY_MODE
 #engine v8
+#endif
 
+#ifndef ASTROTEMPS_LIBRARY_MODE
 #feature-id Utilities > AstroTemps AutoProcessing Tool
-#feature-info AstroTemps AutoProcessing Tool v1.2.0.<br/>Windows build for PixInsight 1.9.4+ with embedded ImageSolver V8, native SPCC, RC-Astro/SASpro engines, GraXpert integration, StarNet2, interactive NBN, Lighthouse, and interactive Star Stretch.
+#feature-info AstroTemps AutoProcessing Tool v1.3.0.<br/>Windows build for PixInsight 1.9.4+ with embedded ImageSolver V8, native SPCC, RC-Astro/SASpro engines, GraXpert integration, StarNet2, interactive NBN, Lighthouse, and interactive Star Stretch.
+#endif
 CoreApplication.ensureMinimumVersion( 1, 9, 4 );
 
 /* V8 note: class/helper <pjsr/...> headers such as Sizer.jsh and
@@ -10605,7 +10609,7 @@ function runCosmicClarityViaSasproCLI( selectedView )
 }
 
 
-var VERSION = "1.2.0";
+var VERSION = "1.3.0";
 
 
 var ENGINE_RCASTRO = 0;
@@ -13036,6 +13040,60 @@ function TAP_configureSPCC194Defaults( P )
    P.outputDirectory = "";
 }
 
+function TAP_isGaiaDR3SPFailureText( text )
+{
+   var t = ( text === undefined || text === null ) ? "" : String( text ).toLowerCase();
+   return t.indexOf( "gaia dr3/sp" ) >= 0 ||
+          t.indexOf( "gaiadr3sp" ) >= 0 ||
+          t.indexOf( "gaia dr3sp" ) >= 0 ||
+          ( t.indexOf( "xpsd" ) >= 0 &&
+            ( t.indexOf( "database" ) >= 0 || t.indexOf( "server" ) >= 0 ) ) ||
+          t.indexOf( "spectrum wavelength table" ) >= 0;
+}
+
+function TAP_handleSPCCFailure( errorText )
+{
+   var details = ( errorText === undefined || errorText === null ) ? "" : String( errorText );
+   var identifiedGaiaError = TAP_isGaiaDR3SPFailureText( details );
+
+   console.criticalln( "SPCC did not complete." );
+   if ( identifiedGaiaError )
+      console.criticalln( "Detected a Gaia DR3/SP / XPSD catalog error: " + details );
+   else
+      console.warningln( "SPCC returned failure without a usable exception message. Check the Process Console for the native SPCC error." );
+
+   var message =
+      "<p><b>SPCC could not complete.</b></p>" +
+      ( identifiedGaiaError ?
+         "<p>The error reported by SPCC points to the <b>Gaia DR3/SP</b> spectrophotometric catalog or its XPSD configuration.</p>" :
+         "<p>PixInsight did not return a detailed SPCC exception to AstroTemps. If the Process Console shows <b>Database files not available for the Gaia DR3/SP catalog</b> or an <b>XPSD server</b> error, use the steps below. If the console shows a different error, choose <b>Abort</b> and investigate that message instead.</p>" ) +
+      "<p><b>Gaia DR3 and Gaia DR3/SP are different databases:</b><br/>" +
+      "Gaia DR3 is used for astrometric solving; Gaia DR3/SP is required by SPCC.</p>" +
+      "<p>Open the <b>Gaia</b> process in PixInsight, open its Preferences, select the <b>Gaia DR3/SP</b> data release, and configure either the complete Small Set or the complete Full Set of DR3/SP database files. Apply/save the Gaia preferences, then run SPCC again.</p>" +
+      "<p><b>Ignore</b> = skip SPCC and continue the AstroTemps workflow.<br/>" +
+      "<b>Abort</b> = stop processing so you can fix the catalog configuration.</p>";
+
+   var answer = ( new MessageBox(
+      message,
+      "AstroTemps - SPCC / Gaia DR3/SP",
+      StdIcon_Error,
+      StdButton_Abort,
+      StdButton_Ignore
+   ) ).execute();
+
+   if ( answer == StdButton_Ignore )
+   {
+      console.warningln( "SPCC skipped by user after a Gaia DR3/SP / unclassified native SPCC failure." );
+      return false;
+   }
+
+   throw new Error(
+      identifiedGaiaError ?
+         "SPCC aborted: Gaia DR3/SP catalog or XPSD server is not correctly configured." :
+         "SPCC aborted after native process failure. Check the Process Console for details."
+   );
+}
+
 function executeSPCC( view, s )
 {
    logStep( "[3] SPCC - direct V8 process" );
@@ -13125,8 +13183,30 @@ function executeSPCC( view, s )
    view.window.bringToFront();
    CoreApplication.processEvents();
 
-   if ( !P.executeOn( view ) )
-      throw new Error( "SPCC failed or was aborted." );
+   var spccCompleted = false;
+   var spccErrorText = "";
+   try
+   {
+      spccCompleted = P.executeOn( view );
+   }
+   catch ( eSPCC )
+   {
+      spccErrorText = TAP_errorText( eSPCC );
+   }
+
+   if ( !spccCompleted )
+   {
+      P = null;
+      TAP_collectGarbage( "after failed direct V8 SPCC" );
+      closeSPCCGraphWindows();
+      view.window.bringToFront();
+      CoreApplication.processEvents();
+
+      if ( spccErrorText.length == 0 || TAP_isGaiaDR3SPFailureText( spccErrorText ) )
+         return TAP_handleSPCCFailure( spccErrorText );
+
+      throw new Error( "SPCC failed: " + spccErrorText );
+   }
 
    P = null;
    TAP_collectGarbage( "after direct V8 SPCC" );
@@ -13134,6 +13214,7 @@ function executeSPCC( view, s )
    view.window.bringToFront();
    CoreApplication.processEvents();
    console.noteln( "SPCC completed through native V8 binding." );
+   return true;
 }
 
 function executeBlurXSharpen( view, s )
@@ -28584,9 +28665,14 @@ function TAP_executeWorkflowStage( stageId, ctx, s )
       break;
 
    case "spcc":
-      executeSPCC( workView, s );
-      if ( s.autoSTF ) applyAutoSTF( workView, true );
-      createProcessSnapshotIfEnabled( workView, s, "SPCC" );
+      var spccCompleted = executeSPCC( workView, s );
+      if ( spccCompleted )
+      {
+         if ( s.autoSTF ) applyAutoSTF( workView, true );
+         createProcessSnapshotIfEnabled( workView, s, "SPCC" );
+      }
+      else
+         console.warningln( "SPCC stage skipped. Continuing with the remaining selected stages." );
       break;
 
    case "blurx":
@@ -31382,4 +31468,6 @@ function main()
       return;
    }
 }
+#ifndef ASTROTEMPS_LIBRARY_MODE
 main();
+#endif
