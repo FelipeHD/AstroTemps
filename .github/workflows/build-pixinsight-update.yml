@@ -1,10 +1,10 @@
-name: Build PixInsight Update Repository
+name: Build PixInsight Update Repository (macOS)
 
 on:
   workflow_dispatch:
   push:
     branches:
-      - pixinsight-update-repository
+      - pixinsight-update-repository-macos
     paths:
       - AstroTemps_AutoProcessing_Tool.js
       - AstroTemps_Redux.js
@@ -22,7 +22,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Check stable release source
+      - name: Check macOS release source
         id: source
         shell: bash
         run: |
@@ -30,14 +30,14 @@ jobs:
             echo "present=true" >> "$GITHUB_OUTPUT"
           else
             echo "present=false" >> "$GITHUB_OUTPUT"
-            echo "Stable release sources or VERSION file are missing. Nothing will be published."
+            echo "macOS release sources or VERSION file are missing. Nothing will be published."
           fi
 
-      - name: Build PixInsight package and XRI
+      - name: Build macOS PixInsight package and XRI
         if: steps.source.outputs.present == 'true'
         run: python3 tools/build_update.py
 
-      - name: Commit generated update repository files
+      - name: Commit generated macOS update repository files
         if: steps.source.outputs.present == 'true'
         shell: bash
         run: |
@@ -48,6 +48,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No generated changes to commit."
           else
-            git commit -m "Build PixInsight update repository for v${VERSION}"
+            git commit -m "Build macOS PixInsight update repository for v${VERSION}"
             git push
           fi
