@@ -1,3 +1,11 @@
+AstroTemps Redux Legacy 1.8.9 — v1.0.1 (2026-09-22)
+- Fixed StarXTerminator -> StarNet2 fallback in the one-click Redux and integrated Full-style custom workflow.
+- Recognizes StarNet2 as a valid alternative dependency when StarXTerminator is not installed.
+- Detects only newly created, same-size RGB stars output from StarNet2 (not stale windows or monochrome masks).
+- Delivers the RGB stars image to Star Stretch and reports missing/invalid output immediately at Star Removal.
+- Automatically positions enabled Star Removal before Star Stretch in a custom execution order.
+- Tested syntax after stripping PixInsight preprocessor directives and seven simulated fallback/output scenarios. Live PixInsight 1.8.9 test pending.
+
 AstroTemps Redux Legacy — 1.0.0 (2026-09-22)
 - Canal de produção independente na branch legacy/1.8.9.
 - Pacote de atualização do PixInsight separado (Windows; versões 1.8.9 a 1.8.9-2).
