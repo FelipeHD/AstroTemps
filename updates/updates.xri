@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xri version="1.0">
+  <description><p>AstroTemps Full Legacy 1.9.3 (Windows). Independent Full-only update channel.</p></description>
+  <platform os="all" arch="noarch" version="1.9.3:1.9.3-99">
+    <package fileName="AstroTemps-Full-Legacy-1.9.3-v1.0.0.zip" sha1="9a6f50c1f44fc6f366f6b99853d8bb8c5c3d05b9" type="script" releaseDate="20260922">
+      <title>AstroTemps Full Legacy 1.9.3 v1.0.0 (Windows)</title>
+      <description><p>Full Legacy standalone configurable workflow. ColorSaturation numeric enum guard, StarXTerminator / StarNet2 fallback and star-output checks. Offline checks only; PixInsight 1.9.3 execution unverified. Windows build with third-party dependencies.</p></description>
+    </package>
+  </platform>
+</xri>
