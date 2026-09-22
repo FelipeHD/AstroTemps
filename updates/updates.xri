@@ -4,10 +4,10 @@
       <p>AstroTemps Redux Legacy 1.9.3 (Windows), separate update channel by Felipe Temponi.</p>
    </description>
    <platform os="all" arch="noarch" version="1.9.3:1.9.3-99">
-      <package fileName="AstroTemps-Redux-Legacy-1.9.3-v1.0.0.zip" sha1="02cc60a993a896a5c14cb7e673f7cd50730a3201" type="script" releaseDate="20260922">
-         <title>AstroTemps Redux Legacy 1.9.3 v1.0.0 (Windows)</title>
+      <package fileName="AstroTemps-Redux-Legacy-1.9.3-v1.0.1.zip" sha1="70de8c01de0d167142e3cb776de8e8dca7962011" type="script" releaseDate="20260922">
+         <title>AstroTemps Redux Legacy 1.9.3 v1.0.1 (Windows)</title>
          <description>
-            <p>Independent SpiderMonkey update for PixInsight 1.9.3 on Windows. Offline validation passed; real PixInsight 1.9.3 execution and third-party module compatibility have not been verified.</p>
+            <p>Independent SpiderMonkey update for PixInsight 1.9.3 on Windows, with StarXTerminator-to-StarNet2 fallback and RGB stars output verification. Offline validation passed; real PixInsight 1.9.3 execution and third-party module compatibility have not been verified.</p>
          </description>
       </package>
    </platform>

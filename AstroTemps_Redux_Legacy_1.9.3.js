@@ -63,7 +63,7 @@
  * =====================================================================
  */
 #feature-id Utilities > AstroTemps Redux - Legacy 1.9.3
-#feature-info AstroTemps Redux Legacy 1.9.3 (Windows).<br/>Independent SpiderMonkey workflow for PixInsight 1.9.3. Target runtime not yet tested; requires compatible third-party modules.
+#feature-info AstroTemps Redux Legacy 1.9.3 v1.0.1 (Windows).<br/>Independent SpiderMonkey workflow for PixInsight 1.9.3. Target runtime not yet tested; requires compatible third-party modules.
 /* Strictly isolate this SpiderMonkey build to PixInsight 1.9.3. */
 if (CoreApplication.versionMajor != 1 ||
     CoreApplication.versionMinor != 9 ||
@@ -5733,7 +5733,12 @@ function TAP_stageRequiredComponents(stageId, s) {
             a.push(s.noiseEngine == ENGINE_SASPRO ? "Cosmic Clarity - SASpro" : "NoiseXTerminator");
             break;
         case "starx":
-            a.push(s.starRemovalEngine == STAR_ENGINE_STARNET ? "StarNet2" : "StarXTerminator");
+            // Match runtime fallback: when StarX is absent, StarNet2 is a valid
+            // dependency. Do not show a misleading "missing StarX" skip prompt.
+            if (s.starRemovalEngine == STAR_ENGINE_STARNET)
+                a.push(TAP_componentAvailable("StarNet2") ? "StarNet2" : "StarXTerminator");
+            else
+                a.push(TAP_componentAvailable("StarXTerminator") ? "StarXTerminator" : "StarNet2");
             break;
         case "findbg":
             a.push("BackgroundNeutralization");
@@ -7073,26 +7078,46 @@ function executeStarNet2(view, s) {
     console.noteln("StarNet2 returned control successfully.");
     console.writeln("Note: StarNet2 backend/model behavior depends on the legacy-compatible module installed on this PixInsight version.");
     processEvents();
-    var starsView = null;
-    if (wantMask) {
-        var windows = ImageWindow.windows;
-        for (var i = 0; i < windows.length; ++i) {
-            var id = windows[i].mainView.id;
-            if (before.indexOf(id) < 0 && windows[i].mainView !== view) {
-                starsView = windows[i].mainView;
-                break;
-            }
-        }
-        if (starsView != null) {
-            var baseId = view.id.replace(/_work(?:_\d+)?$/, "");
-            var desired = uniqueImageId(baseId + "_stars");
-            try {
-                starsView.id = desired;
-            }
-            catch (eRename) { }
-            starsView.window.show();
-        }
+    if (!wantMask)
+        return null;
+    // Legacy StarNet2 builds differ in naming/output behavior. Accept ONLY a
+    // newly created RGB view with the same geometry, never a prior session's
+    // *_stars window, a temporary checkpoint, or a monochrome detection mask.
+    var candidates = [];
+    var windows = ImageWindow.windows;
+    for (var i = 0; i < windows.length; ++i) {
+        var w = windows[i];
+        if (w == null || w.isNull || w.mainView == null || w.mainView.isNull)
+            continue;
+        var v = w.mainView;
+        if (v === view || before.indexOf(v.id) >= 0 ||
+            v.id.indexOf("AstroTemps_Redux_checkpoint") == 0)
+            continue;
+        if (v.image.width == view.image.width &&
+            v.image.height == view.image.height &&
+            v.image.isColor && v.image.numberOfChannels >= 3)
+            candidates.push(v);
     }
+    var starsView = null;
+    if (candidates.length == 1)
+        starsView = candidates[0];
+    else if (candidates.length > 1) {
+        var matching = [];
+        for (var k = 0; k < candidates.length; ++k)
+            if (/(?:star|mask)/i.test(candidates[k].id))
+                matching.push(candidates[k]);
+        if (matching.length == 1)
+            starsView = matching[0];
+    }
+    if (starsView == null)
+        throw new Error("StarNet2 finished, but did not create one identifiable RGB stars/mask image. " +
+            "Verify that this StarNet2 build supports Starmask/Mask and that its output is RGB. " +
+            "The workflow has stopped at Star Removal, before Star Stretch.");
+    var baseId = view.id.replace(/_work(?:_\d+)?$/, "");
+    var desired = uniqueImageId(baseId + "_stars");
+    starsView.id = desired;
+    starsView.window.show();
+    console.noteln("StarNet2 stars image: " + starsView.id);
     return starsView;
 }
 function TAP_nbnEnumCandidates(prefix, value) {
@@ -18523,6 +18548,62 @@ function TAP_executeLighthouse(view) {
         throw new Error("Lighthouse was cancelled. Workflow stopped before the star stages.");
     console.noteln("Lighthouse editing completed.");
 }
+function TAP_runFullStarRemovalWithFallback(ctx, s) {
+    var view = ctx.workView;
+    var preferred = s.starRemovalEngine == STAR_ENGINE_STARNET
+        ? STAR_ENGINE_STARNET : STAR_ENGINE_STARX;
+    var preferredName = preferred == STAR_ENGINE_STARNET ? "StarNet2" : "StarXTerminator";
+    var alternateName = preferred == STAR_ENGINE_STARNET ? "StarXTerminator" : "StarNet2";
+    // If Star Stretch is selected, retain stars regardless of saved legacy
+    // settings from a different installed processing engine.
+    if (s.starStretch) {
+        s.starOutputStars = true;
+        s.starnetMask = true;
+    }
+    function attempt(engine) {
+        var before = TAPR_imageWindowIds();
+        var stars = null;
+        try {
+            if (engine == STAR_ENGINE_STARNET) {
+                if (typeof StarNet2 == "undefined")
+                    throw new Error("StarNet2 is not installed.");
+                stars = executeStarNet2(view, s);
+                if (s.starnetMask && (stars == null || stars.isNull))
+                    throw new Error("StarNet2 did not produce an RGB stars image.");
+            }
+            else {
+                if (typeof StarXTerminator == "undefined")
+                    throw new Error("StarXTerminator is not installed.");
+                executeStarX(view, s);
+                if (s.starOutputStars)
+                    stars = TAPR_findNewStarsView(before, view);
+            }
+            if (stars != null)
+                stars = TAPR_normalizeStarsView(stars, view);
+            if (s.starStretch && (stars == null || stars.isNull))
+                throw new Error("Star Removal did not produce the stars image required by Star Stretch.");
+            return { starsView: stars, engine: engine };
+        }
+        catch (e) {
+            TAPR_cleanupNewWindows(before, [view.id]);
+            throw e;
+        }
+    }
+    var result = TAPR_runWithFallback("[6] Star Removal", view,
+        preferredName, function() { return attempt(preferred); },
+        alternateName, function() { return attempt(preferred == STAR_ENGINE_STARNET ? STAR_ENGINE_STARX : STAR_ENGINE_STARNET); });
+    ctx.starsView = result.starsView;
+    ctx.idsBeforeStarX = null;
+    console.noteln("Star Removal used: " +
+        (result.engine == STAR_ENGINE_STARNET ? "StarNet2" : "StarXTerminator"));
+    if (ctx.starsView != null)
+        console.noteln("Resolved stars image : " + ctx.starsView.id);
+    TAP_collectGarbage("Star Removal stage complete");
+    if (s.backupEachProcess)
+        console.warningln("The post-Star Removal backup duplicates the full-resolution starless image in memory.");
+    createProcessSnapshotIfEnabled(view, s,
+        result.engine == STAR_ENGINE_STARNET ? "StarNet2" : "StarX");
+}
 function TAP_executeWorkflowStage(stageId, ctx, s) {
     var workView = ctx.workView;
     switch (stageId) {
@@ -18571,41 +18652,7 @@ function TAP_executeWorkflowStage(stageId, ctx, s) {
             createProcessSnapshotIfEnabled(workView, s, s.noiseEngine == ENGINE_SASPRO ? "SASpro_Denoise" : "NoiseX");
             break;
         case "starx":
-            ctx.idsBeforeStarX = TAPSTAR_getAllImageIDs();
-            if (s.starRemovalEngine == STAR_ENGINE_STARNET) {
-                if (s.starStretch && !s.starnetMask)
-                    throw new Error("Star Stretch is enabled, but StarNet2 > Mask is disabled. " +
-                        "Enable Mask so the workflow can retain an extracted stars image.");
-                ctx.starsView = executeStarNet2(workView, s);
-                if (s.starnetMask && ctx.starsView == null)
-                    throw new Error("StarNet2 completed, but its generated star mask/output image could not be located.");
-                if (ctx.starsView != null)
-                    console.writeln("Resolved stars image : " + ctx.starsView.id);
-                TAP_collectGarbage("Star Removal stage complete");
-                if (s.backupEachProcess)
-                    console.warningln("Creating the post-StarNet2 backup will duplicate the full starless image in memory. " +
-                        "If PixInsight is memory constrained, disable 'Create a copy of the file after every process'.");
-                createProcessSnapshotIfEnabled(workView, s, "StarNet2");
-            }
-            else {
-                if (s.starStretch && !s.starOutputStars)
-                    throw new Error("Star Stretch is enabled, but StarXTerminator > Output Stars is disabled.");
-                executeStarX(workView, s);
-                if (s.starOutputStars) {
-                    ctx.starsView = TAPSTAR_resolveStarsView(workView, ctx.idsBeforeStarX);
-                    if (ctx.starsView == null)
-                        throw new Error("StarXTerminator completed, but the generated stars image could not be located. " +
-                            "Processing has been stopped before the next stage to avoid using an invalid view.");
-                    console.writeln("Resolved stars image : " + ctx.starsView.id);
-                }
-                // Star removal can temporarily consume substantial CPU/GPU/RAM resources.
-                // Clean up the native process wrapper before an optional full-resolution backup.
-                TAP_collectGarbage("Star Removal stage complete");
-                if (s.backupEachProcess)
-                    console.warningln("Creating the post-StarX backup will duplicate the full starless image in memory. " +
-                        "If PixInsight is memory constrained, disable 'Create a copy of the file after every process'.");
-                createProcessSnapshotIfEnabled(workView, s, "StarX");
-            }
+            TAP_runFullStarRemovalWithFallback(ctx, s);
             break;
         case "findbg":
             ctx.backgroundResult = executeFindBackground(workView, s.findBackgroundMode == FB_MODE_CUSTOM);
@@ -18637,9 +18684,10 @@ function TAP_executeWorkflowStage(stageId, ctx, s) {
         case "starstretch":
             if (ctx.starsView == null)
                 ctx.starsView = TAPSTAR_resolveStarsView(workView, ctx.idsBeforeStarX);
-            if (ctx.starsView == null)
-                throw new Error("Star Stretch could not locate a *_stars image at this point in the execution order.\n\n" +
-                    "Move Star Removal before Star Stretch, or open an existing *_stars image.");
+            if (ctx.starsView == null || ctx.starsView.isNull)
+                throw new Error("Star Stretch has no valid stars image. Enable Star Removal " +
+                    "(StarXTerminator or StarNet2) before Star Stretch, or open a matching *_stars image. " +
+                    "If Star Removal was skipped, inspect the earlier Star Removal messages in the Process Console.");
             if (s.starStretchEngine == STAR_STRETCH_ENGINE_SETIASTRO) {
                 console.writeln("Star Stretch engine : SetiAstro's Star Stretch");
                 console.writeln("Opening SpiderMonkey-compatible interactive Star Stretch dialog...");
@@ -18684,6 +18732,11 @@ function runWorkflow(sourceView, s) {
     var order = s.customizeOrder
         ? TAP_normalizeExecutionOrder(s.executionOrder)
         : TAP_DEFAULT_EXECUTION_ORDER.slice(0);
+    if (s.starX && s.starStretch && order.indexOf("starx") > order.indexOf("starstretch")) {
+        order.splice(order.indexOf("starx"), 1);
+        order.splice(order.indexOf("starstretch"), 0, "starx");
+        console.warningln("Moving Star Removal before Star Stretch: the selected order had an invalid dependency.");
+    }
     if (s.customizeOrder) {
         console.warningln("");
         console.noteln("CUSTOM EXECUTION ORDER ENABLED");
@@ -20520,7 +20573,7 @@ function main() {
     }
 }
 // REDUX LEGACY one-click front-end; Full Legacy engine above is library-only here.
-var REDUX_VERSION = "1.0.0-legacy-1.9.3";
+var REDUX_VERSION = "1.0.1-legacy-1.9.3";
 var TAPR_TITLE = "AstroTemps Redux - Legacy 1.9.3";
 function TAPR_getTargetView() {
     if (Parameters.isViewTarget && Parameters.targetView != null && !Parameters.targetView.isNull)
@@ -20954,30 +21007,38 @@ function TAPR_runStarRemoval(view) {
     s.starnetLinear = true;
     s.starnetUpsample = false;
     s.starnetHighlightProtection = true;
-    return TAPR_runWithFallback("[5] Star Removal", view, "StarXTerminator - Star Removal", function () {
+    function runStarX() {
         var beforeIds = TAPR_imageWindowIds();
         try {
             executeStarX(view, s);
-            var starsView = TAPR_findNewStarsView(beforeIds, view);
-            return TAPR_normalizeStarsView(starsView, view);
+            return TAPR_normalizeStarsView(TAPR_findNewStarsView(beforeIds, view), view);
         }
-        catch (eStarX) {
+        catch (e) {
             TAPR_cleanupNewWindows(beforeIds, [view.id]);
-            throw eStarX;
+            throw e;
         }
-    }, "StarNet2 - Star Removal", function () {
+    }
+    function runStarNet() {
         var beforeIds = TAPR_imageWindowIds();
         try {
             var starsView = executeStarNet2(view, s);
             if (starsView == null || starsView.isNull)
-                starsView = TAPR_findNewStarsView(beforeIds, view);
+                throw new Error("StarNet2 did not return a valid RGB stars image.");
             return TAPR_normalizeStarsView(starsView, view);
         }
-        catch (eStarNet) {
+        catch (e) {
             TAPR_cleanupNewWindows(beforeIds, [view.id]);
-            throw eStarNet;
+            throw e;
         }
-    });
+    }
+    if (typeof StarXTerminator == "undefined") {
+        if (typeof StarNet2 == "undefined")
+            throw new Error("Star Removal needs StarXTerminator or StarNet2. Neither is installed.");
+        console.warningln("StarXTerminator not installed: StarNet2 will be selected automatically.");
+    }
+    return TAPR_runWithFallback("[5] Star Removal", view,
+        "StarXTerminator - Star Removal", runStarX,
+        "StarNet2 - Star Removal", runStarNet);
 }
 function TAPR_runBackgroundNeutralization(view) {
     console.writeln("<end><cbr><br>------------------------------------------------------------");

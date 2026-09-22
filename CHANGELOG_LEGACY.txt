@@ -1,3 +1,12 @@
+AstroTemps Redux Legacy 1.9.3 — v1.0.1 (2026-09-22)
+- Corrigido o fallback StarXTerminator -> StarNet2 no Redux e no motor Full integrado.
+- A ausência ou falha do StarXTerminator aciona StarNet2 se estiver instalado.
+- A imagem de estrelas RGB recém-gerada é validada antes do Star Stretch; imagens antigas e máscaras monocromáticas são ignoradas.
+- Quando ambos estão selecionados, Star Removal é posicionada antes de Star Stretch na ordem personalizada.
+- Mensagem de falha específica na etapa Star Removal se a imagem de estrelas não for gerada.
+- 7 testes simulados da lógica de fallback e saída, 11 testes offline do Redux 1.9.3 e verificação ZIP/SHA-1 concluídos.
+- Execução real no PixInsight 1.9.3 ainda não validada. Canais 1.8.9 e 1.9.4+ preservados.
+
 AstroTemps Redux Legacy 1.9.3 — v1.0.0 (2026-09-22)
 - Novo canal de atualização independente: legacy/1.9.3 para Windows.
 - Motor SpiderMonkey mantido e identificação própria da versão 1.9.3.
