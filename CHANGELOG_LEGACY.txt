@@ -1,0 +1,8 @@
+AstroTemps Redux Legacy — 1.0.0 (2026-09-22)
+- Canal de produção independente na branch legacy/1.8.9.
+- Pacote de atualização do PixInsight separado (Windows; versões 1.8.9 a 1.8.9-2).
+- Código legado compatibilizado sintaticamente com JavaScript ES5 / PJSR SpiderMonkey.
+- Luke's HT Stretch original restaurado: LINKED após SPCC bem-sucedido; UNLINKED quando SPCC é pulado.
+- Mantido ImageSolver automático quando necessário antes do SPCC.
+- Testes offline e integridade/assinatura SHA-1 do ZIP verificados.
+- Limite: execução real com PixInsight 1.8.9 não validada. Versões modernas e seus URLs não modificados.

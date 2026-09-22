@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xri version="1.0">
+   <description>
+      <p>AstroTemps Redux Legacy 1.8.9 (Windows), independent update repository by Felipe Temponi.</p>
+   </description>
+   <platform os="all" arch="noarch" version="1.8.9:1.8.9-2">
+      <package fileName="AstroTemps-Redux-Legacy-1.8.9-v1.0.0.zip" sha1="bab2f00a1eab9a222857bb420919c2ca701313a2" type="script" releaseDate="20260922">
+         <title>AstroTemps Redux Legacy 1.8.9 v1.0.0 (Windows)</title>
+         <description>
+            <p>Independent Windows PJSR/SpiderMonkey release for PixInsight 1.8.9. Offline checks passed; runtime in PixInsight 1.8.9 has not been verified. Requires compatible installed third-party processes.</p>
+         </description>
+      </package>
+   </platform>
+</xri>
