@@ -63,7 +63,7 @@
  * =====================================================================
  */
 #feature-id Utilities > AstroTemps Redux - Legacy 1.9.3
-#feature-info AstroTemps Redux Legacy 1.9.3 v1.0.1 (Windows).<br/>Independent SpiderMonkey workflow for PixInsight 1.9.3. Target runtime not yet tested; requires compatible third-party modules.
+#feature-info AstroTemps Redux Legacy 1.9.3 v1.0.2 (Windows).<br/>Independent SpiderMonkey workflow for PixInsight 1.9.3. Target runtime not yet tested; requires compatible third-party modules.
 /* Strictly isolate this SpiderMonkey build to PixInsight 1.9.3. */
 if (CoreApplication.versionMajor != 1 ||
     CoreApplication.versionMinor != 9 ||
@@ -20573,7 +20573,7 @@ function main() {
     }
 }
 // REDUX LEGACY one-click front-end; Full Legacy engine above is library-only here.
-var REDUX_VERSION = "1.0.1-legacy-1.9.3";
+var REDUX_VERSION = "1.0.2-legacy-1.9.3";
 var TAPR_TITLE = "AstroTemps Redux - Legacy 1.9.3";
 function TAPR_getTargetView() {
     if (Parameters.isViewTarget && Parameters.targetView != null && !Parameters.targetView.isNull)
@@ -21123,7 +21123,12 @@ function TAPR_applyColorSaturation(view) {
         [0.00000, 0.20000],
         [1.00000, 0.20000]
     ];
-    P.HSt = ColorSaturation.AkimaSubsplines;
+    // Legacy PJSR defines the ColorSaturation interpolation enumeration
+    // on the process prototype, not on the constructor.
+    var interpolation = ColorSaturation.prototype.AkimaSubsplines;
+    if (typeof interpolation != "number" || !isFinite(interpolation))
+        throw new Error("ColorSaturation: this PixInsight build does not expose a valid Akima interpolation enum.");
+    P.HSt = interpolation;
     P.hueShift = 0.000;
     view.window.bringToFront();
     if (!P.executeOn(view))

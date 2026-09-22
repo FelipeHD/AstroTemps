@@ -12,7 +12,11 @@ In PixInsight **1.9.3 on Windows**, go to `Resources > Updates > Manage Reposito
 
 **Do not** add this channel to PixInsight 1.8.9 or 1.9.4+. The ZIP installs only `src/scripts/AstroTempsLegacy193/AstroTemps_Redux_Legacy_1.9.3.js`, with a distinct `Utilities > AstroTemps Redux - Legacy 1.9.3` feature. It does not replace other AstroTemps scripts.
 
-## Release v1.0.1 — 2026-09-22
+## Release v1.0.2 — 2026-09-22
+
+The Redux Color Saturation stage now reads the numeric interpolation enum from `ColorSaturation.prototype.AkimaSubsplines` instead of the constructor property. The +0.20 saturation curve is unchanged; a specific diagnostic is raised if this PixInsight build does not expose the enum. Mocked-process regression tests passed; real PixInsight 1.9.3 execution is still pending.
+
+### Fixes in v1.0.1
 
 - Fixed StarXTerminator-to-StarNet2 fallback in Redux and the integrated Full-style custom processing workflow. If StarX is missing or fails, StarNet2 is used when available.
 - Validates StarNet2's newly generated RGB stars output before Star Stretch, ignoring old windows and monochrome masks.
@@ -30,6 +34,6 @@ In PixInsight **1.9.3 on Windows**, go to `Resources > Updates > Manage Reposito
 
 **Validation:** 11 offline checks passed, plus ZIP structure, source-byte equality, and package SHA-1 verification. Real runtime execution in PixInsight 1.9.3 has **not** been performed. This channel is published at the user's request; release does not establish third-party module compatibility. Use a disposable working copy for the first test.
 
-**Update package:** `updates/AstroTemps-Redux-Legacy-1.9.3-v1.0.1.zip` (SHA-1 `70de8c01de0d167142e3cb776de8e8dca7962011`). XRI version range `1.9.3:1.9.3-99`; the script enforces exact core version 1.9.3. The XRI field `os="all"` does not imply that this Windows-only script works on macOS or Linux.
+**Update package:** `updates/AstroTemps-Redux-Legacy-1.9.3-v1.0.2.zip` (SHA-1 `dc4c3fdfdc811f8ffe85f8beb4dc7196f66eba5f`). XRI version range `1.9.3:1.9.3-99`; the script enforces exact core version 1.9.3. The XRI field `os="all"` does not imply that this Windows-only script works on macOS or Linux.
 
 Future Legacy 1.9.3 releases should be published only to this branch, never merged into `pixinsight-update-repository`.
