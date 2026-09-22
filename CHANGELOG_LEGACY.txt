@@ -1,0 +1,8 @@
+AstroTemps Redux Legacy 1.9.3 — v1.0.0 (2026-09-22)
+- Novo canal de atualização independente: legacy/1.9.3 para Windows.
+- Motor SpiderMonkey mantido e identificação própria da versão 1.9.3.
+- Removida a referência espectral de SPCC serializada a partir da versão 1.8.9; preservados valores nativos da versão instalada.
+- ImageSolver integrado quando não houver solução astrométrica e diagnósticos de ausência do script.
+- Luke's HT Stretch preservado: LINKED após SPCC bem-sucedido; UNLINKED se o SPCC for pulado.
+- 11 verificações offline e integridade do ZIP aprovadas; execução real no PixInsight 1.9.3 não validada.
+- Sem alterações nos canais legacy/1.8.9 e pixinsight-update-repository.
