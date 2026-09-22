@@ -4,10 +4,10 @@
       <p>AstroTemps Redux Legacy 1.8.9 (Windows), independent update repository by Felipe Temponi.</p>
    </description>
    <platform os="all" arch="noarch" version="1.8.9:1.8.9-2">
-      <package fileName="AstroTemps-Redux-Legacy-1.8.9-v1.0.1.zip" sha1="fce2ade033b9a8e620e48581f855a0544f571a96" type="script" releaseDate="20260922">
-         <title>AstroTemps Redux Legacy 1.8.9 v1.0.1 (Windows)</title>
+      <package fileName="AstroTemps-Redux-Legacy-1.8.9-v1.0.2.zip" sha1="2805442dc9f9a72d97d25c0d753304f16683d478" type="script" releaseDate="20260922">
+         <title>AstroTemps Redux Legacy 1.8.9 v1.0.2 (Windows)</title>
          <description>
-            <p>Independent Windows PJSR/SpiderMonkey release for PixInsight 1.8.9. StarXTerminator -> StarNet2 fallback fix. Offline checks passed; runtime in PixInsight 1.8.9 has not been verified. Requires compatible installed third-party processes.</p>
+            <p>Independent Windows PJSR/SpiderMonkey release for PixInsight 1.8.9. StarXTerminator -> StarNet2 fallback fix. ColorSaturation HSt enum type fixed. Offline checks passed; runtime in PixInsight 1.8.9 has not been verified. Requires compatible installed third-party processes.</p>
          </description>
       </package>
    </platform>

@@ -12,14 +12,18 @@ On **PixInsight 1.8.9 for Windows**, go to `Resources > Updates > Manage Reposit
 
 The package installs **only** `src/scripts/AstroTempsLegacy/AstroTemps_Redux_Legacy_1.8.9.js`. It does not replace modern `AstroTemps_Redux.js`, `AstroTemps_AutoProcessing_Tool.js`, or their updates. The script identifies itself separately in the Utilities menu.
 
+## Fix in v1.0.2
+
+The Redux Color Saturation stage now takes the numeric interpolation enum from `ColorSaturation.prototype.AkimaSubsplines`, rather than the undefined constructor property. It reports a specific error if the enum is unavailable and retains the original +0.20 saturation curve. Regression tested with a mocked native process; actual PixInsight 1.8.9 runtime verification is pending.
+
 ## Fix in v1.0.1
 
 When StarXTerminator is absent, both the Redux and the integrated Full-style star-removal stage use StarNet2 automatically instead of skipping Star Removal. StarNet2 output must be a newly generated RGB stars image with matching geometry; failures are reported at Star Removal rather than letting Star Stretch fail later. When both stages are enabled, Star Removal is automatically moved before Star Stretch in a custom execution order. The alternative is attempted from a stage checkpoint when the preferred engine fails. Real runtime verification in PixInsight 1.8.9 is still pending.
 
 ## Release
 
-- Script version: `1.0.1-legacy`; update package: `v1.0.1` (2026-09-22).
-- Update manifest: `updates/updates.xri`; distributable ZIP: `updates/AstroTemps-Redux-Legacy-1.8.9-v1.0.1.zip`.
+- Script version: `1.0.2-legacy`; update package: `v1.0.2` (2026-09-22).
+- Update manifest: `updates/updates.xri`; distributable ZIP: `updates/AstroTemps-Redux-Legacy-1.8.9-v1.0.2.zip`.
 - Manifest version range: PixInsight `1.8.9` through `1.8.9-2` (the package is **Windows-only**; the portable XRI `os="all"` field does not imply macOS or Linux compatibility).
 - ZIP uses the PixInsight updater's `src/scripts/...` directory structure, separate from the ZIP provided for manual installation.
 - Installed modules / dependencies such as SPCC, ImageSolver, BlurXTerminator, NoiseXTerminator, StarXTerminator, StarNet2, and other required processes are **not** bundled. They must be available in compatible versions.

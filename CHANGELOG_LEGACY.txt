@@ -1,3 +1,9 @@
+AstroTemps Redux Legacy 1.8.9 — v1.0.2 (2026-09-22)
+- Fixed ColorSaturation.HSt receiving undefined: the numeric Akima interpolation constant is obtained from ColorSaturation.prototype.AkimaSubsplines.
+- Added an explicit error if the native enum is unavailable, retaining the +0.20 saturation setting.
+- Mock-process regression tests passed. Live PixInsight 1.8.9 execution remains unverified.
+- Published a separate v1.0.2 ZIP and updated its SHA-1 in updates.xri. Other PixInsight channels are untouched.
+
 AstroTemps Redux Legacy 1.8.9 — v1.0.1 (2026-09-22)
 - Fixed StarXTerminator -> StarNet2 fallback in the one-click Redux and integrated Full-style custom workflow.
 - Recognizes StarNet2 as a valid alternative dependency when StarXTerminator is not installed.
