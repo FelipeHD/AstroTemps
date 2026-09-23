@@ -1,4 +1,4 @@
-# AstroTemps Redux Legacy — PixInsight 1.8.9 (Windows)
+# AstroTemps Full + Redux Legacy — PixInsight 1.8.9 (Windows)
 
 **Separate production channel:** `legacy/1.8.9`, independent of the current PixInsight 1.9.4+ channel `pixinsight-update-repository`. The original releases and their repository links have not been modified.
 
@@ -10,7 +10,13 @@ https://raw.githubusercontent.com/FelipeHD/AstroTemps/legacy/1.8.9/updates/
 
 On **PixInsight 1.8.9 for Windows**, go to `Resources > Updates > Manage Repositories > Add`, paste the URL above, confirm, then `Resources > Updates > Check for Updates` and apply the package. Restart PixInsight if the updater requests it. Do **not** add the Legacy channel to PixInsight 1.9.4+.
 
-The package installs **only** `src/scripts/AstroTempsLegacy/AstroTemps_Redux_Legacy_1.8.9.js`. It does not replace modern `AstroTemps_Redux.js`, `AstroTemps_AutoProcessing_Tool.js`, or their updates. The script identifies itself separately in the Utilities menu.
+**This one repository installs both scripts** through two update packages. Select/apply both packages if PixInsight lists them separately:
+- **Redux v1.0.2:** `src/scripts/AstroTempsLegacy/AstroTemps_Redux_Legacy_1.8.9.js`
+- **Full v1.0.0:** `src/scripts/AstroTempsFullLegacy189/AstroTemps_Full_Legacy_1.8.9.js`
+
+Both appear as distinct items under **Script > Utilities**. The Redux source/package is unchanged. Neither package replaces modern `AstroTemps_Redux.js` nor `AstroTemps_AutoProcessing_Tool.js` from PixInsight 1.9.4+. If you previously added the separate `legacy/full-1.8.9/updates/` repository, remove that obsolete entry to avoid duplicate Full offerings. Existing Redux users can Check for Updates to receive the new Full package.
+
+**Full v1.0.0 caveat:** Based on the older Full Legacy engine, not feature-identical to Full 1.9.4. Offline/static checks only; live PixInsight 1.8.9 runtime has not been verified. Install compatible third-party dependencies separately. For nonstandard PixInsight install directories review the absolute ImageSolver `#include` paths.
 
 ## Fix in v1.0.2
 
