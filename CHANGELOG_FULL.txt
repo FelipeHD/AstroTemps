@@ -1,0 +1,7 @@
+AstroTemps Full Legacy 1.9.3 — v1.0.0 (2026-09-22)
+- First standalone Full release, separate from Redux Legacy and current 1.9.4 updates.
+- Reviewed ColorSaturation interpolation safety and StarXTerminator-to-StarNet2 fallback / stars-output validation.
+- Fixed the Full dialog rejecting Star Stretch based on stale output-stars checkbox values even though runtime enables those outputs automatically.
+- Fixed null-target guard in the Full dialog.
+- Static JS syntax and package structure checks only; live PixInsight 1.9.3 execution remains unverified.
+- Known limitation: ImageSolver includes use the standard C:/Program Files/PixInsight install path.

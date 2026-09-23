@@ -1,13 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xri version="1.0">
    <description>
-      <p>AstroTemps Redux Legacy 1.9.3 (Windows), separate update channel by Felipe Temponi.</p>
+      <p>AstroTemps Full + Redux Legacy 1.9.3 (Windows), one update repository by Felipe Temponi.</p>
    </description>
    <platform os="all" arch="noarch" version="1.9.3:1.9.3-99">
       <package fileName="AstroTemps-Redux-Legacy-1.9.3-v1.0.2.zip" sha1="dc4c3fdfdc811f8ffe85f8beb4dc7196f66eba5f" type="script" releaseDate="20260922">
          <title>AstroTemps Redux Legacy 1.9.3 v1.0.2 (Windows)</title>
          <description>
             <p>Independent SpiderMonkey update for PixInsight 1.9.3 on Windows, with StarXTerminator-to-StarNet2 fallback and RGB stars output verification. ColorSaturation HSt enum type fixed. Offline validation passed; real PixInsight 1.9.3 execution and third-party module compatibility have not been verified.</p>
+         </description>
+      </package>
+      <package fileName="AstroTemps-Full-Legacy-1.9.3-v1.0.0.zip" sha1="9a6f50c1f44fc6f366f6b99853d8bb8c5c3d05b9" type="script" releaseDate="20260922">
+         <title>AstroTemps Full Legacy 1.9.3 v1.0.0 (Windows)</title>
+         <description>
+            <p>Standalone configurable Full Legacy workflow; independent menu entry. StarXTerminator-to-StarNet2 fallback, ColorSaturation interpolation guard and stars-output validation. Runtime in PixInsight 1.9.3 is not yet verified; third-party modules are not bundled.</p>
          </description>
       </package>
    </platform>
