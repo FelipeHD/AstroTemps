@@ -63,7 +63,7 @@
  * =====================================================================
  */
 #feature-id Utilities > AstroTemps Full - Legacy 1.8.9
-#feature-info AstroTemps Full Legacy 1.8.9 v1.0.0 (Windows).<br/>Independent, configurable PJSR/SpiderMonkey beta based on the Legacy Full engine; not an exact feature match to the 1.9.4 Full. It does not replace Redux or any PixInsight update channel.
+#feature-info AstroTemps Full Legacy 1.8.9 v1.3.6 (Windows).<br/>Independent, configurable PJSR/SpiderMonkey beta based on the Legacy Full engine; not an exact feature match to the 1.9.4 Full. It does not replace Redux or any PixInsight update channel.
 /* The V8 minimum-version helper was introduced with PixInsight 1.9.4.
  * Use the legacy version fields that are available in PixInsight 1.8.9. */
 if (CoreApplication.versionMajor != 1 ||
@@ -2592,144 +2592,507 @@ function TAPSTAR_previewZoomIndexFromFactor(factor) {
     factor = Math.round(Number(factor));
     return factor == 1 ? 0 : factor == 2 ? 1 : factor == 8 ? 3 : 2;
 }
-function TAPSTAR_NBtoRGBDialog_init(starsView, s) {
-    var self = this;
-    this.windowTitle = "SetiAstro's NB to RGB Stars - FT-Astro";
-    this.applied = false;
-    this.resultView = null;
-    this.previewInput = null;
-    this.previewResult = null;
-    var title = new Label(this);
-    title.useRichText = true;
-    title.textAlignment = TextAlign_HorzCenter | TextAlign_VertCenter;
-    title.text = "<b>SetiAstro's NB to RGB Stars</b>";
-    var info = new Label(this);
-    info.useRichText = true;
-    info.wordWrapping = true;
-    info.text =
-        "OSC dual-band stars-only image: <b>" + starsView.id + "</b><br/>" +
-            "Adjust the Ha/OIII balance and SetiAstro star stretch visually. " +
-            "The preview is temporary; <b>Execute & Continue</b> creates NBtoRGB_stars and resumes the workflow.";
-    this.ratio = new NumericControl(this);
-    this.ratio.label.text = "Ha to OIII ratio:";
-    this.ratio.setRange(0.0, 1.0);
-    this.ratio.slider.setRange(0, 1000);
-    this.ratio.setPrecision(2);
-    this.ratio.setValue(s.starHaToOiiiRatio);
-    this.stretch = new NumericControl(this);
-    this.stretch.label.text = "Stretch Amount:";
-    this.stretch.setRange(0.0, 8.0);
-    this.stretch.slider.setRange(0, 800);
-    this.stretch.setPrecision(2);
-    this.stretch.setValue(s.starStretchFactor);
-    this.color = new NumericControl(this);
-    this.color.label.text = "Color Boost Amount:";
-    this.color.setRange(0.0, 3.0);
-    this.color.slider.setRange(0, 300);
-    this.color.setPrecision(2);
-    this.color.setValue(s.starColorBoost);
-    this.showPreview = new CheckBox(this);
-    this.showPreview.text = "Show Preview";
-    this.showPreview.checked = true;
-    var zoomLabel = new Label(this);
-    zoomLabel.text = "Zoom:";
-    this.zoom = new ComboBox(this);
-    this.zoom.addItem("1:1");
-    this.zoom.addItem("1:2");
-    this.zoom.addItem("1:4");
-    this.zoom.addItem("1:8");
-    this.zoom.currentItem = TAPSTAR_previewZoomIndexFromFactor(s.starStretchPreviewZoom);
-    this.refresh = new PushButton(this);
-    this.refresh.text = "Refresh Preview";
-    this.executeButton = new PushButton(this);
-    this.executeButton.text = "Execute && Continue";
-    this.cancelButton = new PushButton(this);
-    this.cancelButton.text = "Cancel Workflow";
-    this.closePreview = function () {
-        TAPSTAR_closeViewQuietly(self.previewResult);
-        TAPSTAR_closeViewQuietly(self.previewInput);
-        self.previewResult = null;
-        self.previewInput = null;
-    };
-    this.refreshPreview = function () {
-        self.closePreview();
-        if (!self.showPreview.checked)
-            return;
-        try {
-            var factor = TAPSTAR_previewZoomFactorFromIndex(self.zoom.currentItem);
-            self.previewInput = TAPSTAR_makeReducedPreviewSource(starsView, factor, "AstroTemps_NBtoRGB_preview_src");
-            var extracted = [];
-            try {
-                var ha = TAPSTAR_extractChannel(self.previewInput, 0, "_HaPreview", extracted);
-                var oi = TAPSTAR_extractChannel(self.previewInput, 1, "_OIIIPreview", extracted);
-                self.previewResult = TAPSTAR_combineNBtoRGB(ha, oi, self.ratio.value, uniqueImageId("AstroTemps_NBtoRGB_Preview"), true);
-                TAPSTAR_applySCNR(self.previewResult);
-                TAPSTAR_applyMTF(self.previewResult);
-                TAPSTAR_applySCNR(self.previewResult);
-                TAPSTAR_reverseMTF(self.previewResult);
-                TAPSTAR_applyStarStretch(self.previewResult, self.stretch.value, self.color.value);
-                self.previewResult.window.show();
-                self.previewResult.window.bringToFront();
-                self.previewResult.window.zoomToOptimalFit();
+
+// Shared v1.3.6 interface backport; ES5 constructors for legacy PJSR.
+function TAP_TR_UI(text) { return text; }
+function TAP_UIMessageBox(text,title,icon,button) { return new MessageBox(text,title,icon,button); }
+function TAPMC_PreviewControl_init( parent )
+{
+   this.autoScroll = true;
+   this.tracking = true;
+   this.displayImage = null;
+   this.scaledBitmap = null;
+   this.zoom = 1;
+   this.dragging = false;
+   this.dragOrigin = new Point( 0, 0 );
+   this.viewport.cursor = new Cursor( StdCursor_OpenHand );
+
+   this.releaseBitmap = function()
+   {
+      if ( this.scaledBitmap != null )
+         this.scaledBitmap.clear();
+      this.scaledBitmap = null;
+   };
+   this.setPosition = function( x, y )
+   {
+      this.horizontalScrollPosition = Math.round( Math.max( 0, Math.min( this.maxHorizontalScrollPosition, x ) ) );
+      this.verticalScrollPosition = Math.round( Math.max( 0, Math.min( this.maxVerticalScrollPosition, y ) ) );
+      this.viewport.update();
+   };
+   this.updateRanges = function()
+   {
+      var x = this.horizontalScrollPosition, y = this.verticalScrollPosition;
+      var b = this.scaledBitmap;
+      this.setHorizontalScrollRange( 0, b == null ? 0 : Math.max( 0, b.width - this.viewport.width ) );
+      this.setVerticalScrollRange( 0, b == null ? 0 : Math.max( 0, b.height - this.viewport.height ) );
+      this.setPosition( x, y );
+   };
+   this.renderBitmap = function()
+   {
+      this.releaseBitmap();
+      if ( this.displayImage != null )
+      {
+         var bitmap = this.displayImage.render();
+         if ( this.zoom == 1 )
+            this.scaledBitmap = bitmap;
+         else
+         {
+            try
+            {
+               this.scaledBitmap = bitmap.scaled( this.zoom, this.zoom,
+                  this.zoom < 1 ? BitmapInterpolation_Bilinear : BitmapInterpolation_NearestNeighbor );
             }
-            finally {
-                TAPSTAR_closeExtractedChannels(extracted);
-            }
-        }
-        catch (e) {
-            self.closePreview();
-            new MessageBox("Could not generate the Star Stretch preview.\n\n" + TAP_errorText(e), "AstroTemps - Star Stretch Preview", StdIcon_Error, StdButton_Ok).execute();
-        }
-    };
-    this.refresh.onClick = function () { self.refreshPreview(); };
-    this.showPreview.onCheck = function (checked) {
-        if (checked)
-            self.refreshPreview();
-        else
-            self.closePreview();
-    };
-    this.zoom.onItemSelected = function () { if (self.showPreview.checked)
-        self.refreshPreview(); };
-    this.executeButton.onClick = function () {
-        self.closePreview();
-        s.starHaToOiiiRatio = self.ratio.value;
-        s.starStretchFactor = self.stretch.value;
-        s.starColorBoost = self.color.value;
-        s.starStretchPreviewZoom = TAPSTAR_previewZoomFactorFromIndex(self.zoom.currentItem);
-        self.resultView = executeNBtoRGBStarStretch(starsView, s);
-        self.applied = true;
-        self.ok();
-    };
-    this.cancelButton.onClick = function () {
-        self.closePreview();
-        self.cancel();
-    };
-    var zoomRow = new HorizontalSizer;
-    zoomRow.spacing = 6;
-    zoomRow.add(zoomLabel);
-    zoomRow.add(this.zoom);
-    zoomRow.add(this.refresh);
-    zoomRow.addStretch();
-    var buttons = new HorizontalSizer;
-    buttons.spacing = 6;
-    buttons.add(this.cancelButton);
-    buttons.addStretch();
-    buttons.add(this.executeButton);
-    this.sizer = new VerticalSizer;
-    this.sizer.margin = 10;
-    this.sizer.spacing = 7;
-    this.sizer.add(title);
-    this.sizer.add(info);
-    this.sizer.add(this.ratio);
-    this.sizer.add(this.stretch);
-    this.sizer.add(this.color);
-    this.sizer.add(this.showPreview);
-    this.sizer.add(zoomRow);
-    this.sizer.add(buttons);
-    this.adjustToContents();
-    this.setFixedWidth(Math.max(660, this.width));
-    processEvents();
-    this.refreshPreview();
+            finally { bitmap.clear(); }
+         }
+      }
+   };
+   this.setImage = function( image )
+   {
+      if ( this.displayImage != null && this.displayImage != image )
+         try { this.displayImage.free(); } catch ( eFree ) {}
+      this.displayImage = image;
+      this.renderBitmap();
+      this.updateRanges();
+   };
+   this.clear = function( preserveView )
+   {
+      this.dragging = false;
+      this.viewport.cursor = new Cursor( StdCursor_OpenHand );
+      this.releaseBitmap();
+      if ( this.displayImage != null )
+         try { this.displayImage.free(); } catch ( eFree ) {}
+      this.displayImage = null;
+      // A curve recalculation replaces the pixels, not the user's framing.
+      if ( !preserveView )
+      {
+         this.zoom = 1;
+         this.updateRanges();
+      }
+      this.viewport.update();
+   };
+   this.updateZoom = function( zoom, refPoint )
+   {
+      if ( this.displayImage == null || !isFinite( zoom ) ) return;
+      zoom = Math.max( 0.125, Math.min( 4, zoom ) );
+      if ( zoom == this.zoom ) return;
+      if ( refPoint == null )
+         refPoint = new Point( this.viewport.width/2, this.viewport.height/2 );
+      var ix = (this.horizontalScrollPosition + refPoint.x)/this.zoom;
+      var iy = (this.verticalScrollPosition + refPoint.y)/this.zoom;
+      this.zoom = zoom;
+      this.renderBitmap();
+      this.updateRanges();
+      this.setPosition( ix*zoom - refPoint.x, iy*zoom - refPoint.y );
+   };
+   this.viewport.onResize = function() { this.parent.updateRanges(); };
+   this.onHorizontalScrollPosUpdated = function() { this.viewport.update(); };
+   this.onVerticalScrollPosUpdated = function() { this.viewport.update(); };
+   this.viewport.onMouseWheel = function( x, y, delta, buttonState, modifiers )
+   {
+      if ( delta == 0 ) return;
+      var p = this.parent;
+      // PJSR delta convention matches the main AstroTemps preview.
+      p.updateZoom( p.zoom * (delta < 0 ? 1.25 : 0.8), new Point( x, y ) );
+   };
+   this.viewport.onMousePress = function( x, y, button )
+   {
+      var p = this.parent;
+      if ( button != MouseButton_Left || p.displayImage == null ) return;
+      p.dragOrigin = new Point( x, y );
+      p.dragging = true;
+      this.cursor = new Cursor( StdCursor_ClosedHand );
+   };
+   this.viewport.onMouseMove = function( x, y )
+   {
+      var p = this.parent;
+      if ( !p.dragging ) return;
+      p.setPosition( p.horizontalScrollPosition + p.dragOrigin.x - x,
+                     p.verticalScrollPosition + p.dragOrigin.y - y );
+      p.dragOrigin = new Point( x, y );
+   };
+   this.viewport.onMouseRelease = function()
+   {
+      this.parent.dragging = false;
+      this.cursor = new Cursor( StdCursor_OpenHand );
+   };
+   this.viewport.onPaint = function( x0, y0, x1, y1 )
+   {
+      var g = new Graphics( this );
+      var p = this.parent;
+      g.fillRect( x0, y0, x1, y1, new Brush( 0xff101010 ) );
+      if ( p.scaledBitmap != null )
+         g.drawBitmap( -p.horizontalScrollPosition, -p.verticalScrollPosition, p.scaledBitmap );
+      else
+      {
+         g.pen = new Pen( 0xff888888, 1 );
+         g.drawTextRect( 0, 0, this.width, this.height, TAP_TR_UI( "Preview unavailable" ), TextAlign_HorzCenter | TextAlign_VertCenter );
+      }
+      g.end();
+   };
+}
+function TAPRH_addEmbeddedPreview( dialog )
+{
+   dialog.previewControl = new TAPMC_PreviewControl( dialog );
+   dialog.previewControl.setScaledMinSize( 380, 340 );
+   var title = new Label( dialog );
+   title.text = TAP_TR_UI( "Preview" );
+   dialog.previewZoomIn = new ToolButton( dialog );
+   dialog.previewZoomIn.icon = dialog.scaledResource( ":/icons/zoom-in.png" );
+   dialog.previewZoomIn.setScaledFixedSize( 24, 24 );
+   dialog.previewZoomIn.toolTip = TAP_TR_UI( "Zoom in" );
+   dialog.previewZoomIn.onClick = function() { dialog.previewControl.updateZoom( dialog.previewControl.zoom * 1.25 ); };
+   dialog.previewZoomOut = new ToolButton( dialog );
+   dialog.previewZoomOut.icon = dialog.scaledResource( ":/icons/zoom-out.png" );
+   dialog.previewZoomOut.setScaledFixedSize( 24, 24 );
+   dialog.previewZoomOut.toolTip = TAP_TR_UI( "Zoom out" );
+   dialog.previewZoomOut.onClick = function() { dialog.previewControl.updateZoom( dialog.previewControl.zoom * 0.8 ); };
+   var header = new HorizontalSizer;
+   header.spacing = 4;
+   header.add( title ); header.addStretch();
+   header.add( dialog.previewZoomIn ); header.add( dialog.previewZoomOut );
+   var column = new VerticalSizer;
+   column.spacing = 4;
+   column.add( header ); column.add( dialog.previewControl, 100 );
+   return column;
+}
+function TAP_setAllStages( dialog, checked )
+{
+   var bindings = dialog.stageBindings;
+   var i;
+   for ( i = 0; i < bindings.length; ++i )
+   {
+      bindings[i].checkBox.checked = checked;
+      bindings[i].section.enabledCheckBox.checked = checked;
+   }
+   // Apply dependencies only after every stage has its final selection state.
+   for ( i = 0; i < bindings.length; ++i )
+      if ( bindings[i].onChanged ) bindings[i].onChanged( checked );
+   dialog.updateEnabledState();
+}
+function TAP_updateWorkflowScroll( dialog )
+{
+   var box = dialog.workflowScroll;
+   box.maxVerticalScrollPosition = Math.max( 0, dialog.scrollContent.height - box.viewport.height );
+   box.maxHorizontalScrollPosition = 0;
+   box.verticalScrollPosition = Math.max( 0, Math.min( box.maxVerticalScrollPosition, box.verticalScrollPosition ) );
+   dialog.scrollContent.move( 0, -box.verticalScrollPosition );
+   box.viewport.update();
+}
+function TAP_fitShownWorkflowToScreen( dialog )
+{
+   var available = dialog.availableScreenRect;
+   if ( available == null || !isFinite( available.height ) || !isFinite( available.width ) ||
+        !isFinite( available.x0 ) || !isFinite( available.y0 ) ) return;
+   var width = Math.max( 660, Math.min( dialog.width, available.width - 40 ) );
+   var height = Math.max( 280, available.height - 40 );
+   dialog.resize( width, height );
+   dialog.move( available.x0 + Math.max( 0, Math.round( (available.width-dialog.width)/2 ) ),
+                available.y0 + Math.max( 0, Math.round( (available.height-dialog.height)/2 ) ) );
+}
+function TAP_openMainImage( dialog )
+{
+   if ( dialog.fileOpenBusy || dialog.interfaceFinished ) return;
+   dialog.fileOpenBusy = true;
+   dialog.openImage_Button.enabled = false;
+   try
+   {
+      var picker = new OpenFileDialog;
+      picker.caption = TAP_TR_UI( "Open New Image" );
+      picker.multipleSelections = false;
+      picker.loadImageFilters();
+      if ( !picker.execute() || !picker.fileNames || picker.fileNames.length == 0 ) return;
+      var windows = ImageWindow.open( picker.fileNames[0] );
+      if ( windows == null || windows.length == 0 ) throw new Error( "No image could be opened." );
+      for ( var i = 0; i < windows.length; ++i ) windows[i].show();
+      dialog.target_ViewList.getMainViews();
+      dialog.target_ViewList.currentView = windows[0].mainView;
+      windows[0].bringToFront();
+   }
+   catch ( error )
+   {
+      TAP_UIMessageBox( TAP_errorText( error ), TAP_TR_UI( "Open New Image" ), StdIcon_Error, StdButton_Ok ).execute();
+   }
+   finally
+   {
+      dialog.fileOpenBusy = false;
+      dialog.openImage_Button.enabled = true;
+   }
+}
+function TAP_refreshMainImages( dialog )
+{
+   if ( dialog.fileOpenBusy || dialog.interfaceFinished ) return;
+   var windows = ImageWindow.windows;
+   var ids = [];
+   for ( var i = 0; i < windows.length; ++i )
+      if ( !windows[i].isNull ) ids.push( windows[i].mainView.id );
+   var signature = ids.sort().join( "|" );
+   if ( signature == dialog.imageListSignature ) return;
+   dialog.imageListSignature = signature;
+   var current = dialog.target_ViewList.currentView;
+   dialog.target_ViewList.getMainViews();
+   if ( current != null && !current.isNull ) dialog.target_ViewList.currentView = current;
+}
+function TAP_executeMainModeless( dialog )
+{
+   // Keep this script's UI objects alive, while allowing input to the host UI.
+   // Processing starts only after this loop has ended and the interface is hidden.
+   var ticks = 0;
+   try
+   {
+      dialog.show();
+      while ( !dialog.interfaceFinished )
+      {
+         processEvents( false );
+         if ( dialog.interfaceFinished ) break;
+         if ( ++ticks % 25 == 0 ) TAP_refreshMainImages( dialog );
+         msleep( 20 );
+      }
+      return dialog.interfaceAccepted;
+   }
+   finally { dialog.hide(); }
+}
+function TAP_setMainCompact( dialog, compact )
+{
+   if ( dialog.windowCompact == compact || dialog.fileOpenBusy ) return;
+   if ( compact )
+   {
+      dialog.expandedGeometry = { width: dialog.width, height: dialog.height,
+         x: dialog.position.x, y: dialog.position.y };
+      dialog.windowCompact = true;
+      dialog.workflowScroll.visible = false;
+      dialog.adjustToContents();
+   }
+   else
+   {
+      dialog.windowCompact = false;
+      dialog.workflowScroll.visible = true;
+      var g = dialog.expandedGeometry;
+      if ( g != null ) { dialog.resize( g.width, g.height ); dialog.move( g.x, g.y ); }
+      dialog.fitWorkflowContent();
+   }
+   dialog.minimize_Button.enabled = !compact;
+   dialog.restore_Button.enabled = compact;
+}
+function TAPMC_PreviewControl(parent) { this.__base__ = ScrollBox; this.__base__(parent); TAPMC_PreviewControl_init.call(this,parent); }
+TAPMC_PreviewControl.prototype = new ScrollBox;
+function TAPSTAR_NBtoRGBDialog_init( starsView, s )
+{
+   var self = this;
+   this.windowTitle = TAP_TR_UI( "SetiAstro's NB to RGB Stars - AstroTemps" );
+   this.applied = false;
+   this.skipped = false;
+   this.resultView = null;
+   this.previewInput = null;
+   this.previewResult = null;
+   this.previewBusy = false;
+   this.previewClosing = false;
+   var previewColumn = TAPRH_addEmbeddedPreview( this );
+
+   var title = new Label( this );
+   title.useRichText = true;
+   title.textAlignment = TextAlign_HorzCenter | TextAlign_VertCenter;
+   title.text = TAP_TR_UI( "<b>SetiAstro's NB to RGB Stars</b>" );
+
+   var info = new Label( this );
+   info.useRichText = true;
+   info.wordWrapping = true;
+   info.text =
+      TAP_TR_UI( "OSC dual-band stars-only image: <b>" + starsView.id + "</b><br/>" +
+      "Adjust the Ha/OIII balance and SetiAstro star stretch visually. " +
+      "The preview is temporary; <b>Execute & Continue</b> creates NBtoRGB_stars and resumes the workflow." );
+
+   this.ratio = new NumericControl( this );
+   this.ratio.label.text = TAP_TR_UI( "Ha to OIII ratio:" );
+   this.ratio.setRange( 0.0, 1.0 );
+   this.ratio.slider.setRange( 0, 1000 );
+   this.ratio.setPrecision( 2 );
+   this.ratio.setValue( s.starHaToOiiiRatio );
+
+   this.stretch = new NumericControl( this );
+   this.stretch.label.text = TAP_TR_UI( "Stretch Amount:" );
+   this.stretch.setRange( 0.0, 8.0 );
+   this.stretch.slider.setRange( 0, 800 );
+   this.stretch.setPrecision( 2 );
+   this.stretch.setValue( s.starStretchFactor );
+
+   this.color = new NumericControl( this );
+   this.color.label.text = TAP_TR_UI( "Color Boost Amount:" );
+   this.color.setRange( 0.0, 3.0 );
+   this.color.slider.setRange( 0, 300 );
+   this.color.setPrecision( 2 );
+   this.color.setValue( s.starColorBoost );
+
+   this.showPreview = new CheckBox( this );
+   this.showPreview.text = TAP_TR_UI( "Show Preview" );
+   this.showPreview.checked = true;
+
+   var zoomLabel = new Label( this );
+   zoomLabel.text = TAP_TR_UI( "Preview resolution:" );
+   this.zoom = new ComboBox( this );
+   this.zoom.addItem( "1:1" );
+   this.zoom.addItem( "1:2" );
+   this.zoom.addItem( "1:4" );
+   this.zoom.addItem( "1:8" );
+   this.zoom.currentItem = TAPSTAR_previewZoomIndexFromFactor( s.starStretchPreviewZoom );
+
+   this.refresh = new PushButton( this );
+   this.refresh.text = TAP_TR_UI( "Refresh Preview" );
+
+   this.executeButton = new PushButton( this );
+   this.executeButton.text = TAP_TR_UI( "Execute && Continue" );
+
+   this.cancelButton = new PushButton( this );
+   this.cancelButton.text = TAP_TR_UI( "Cancel Workflow" );
+
+   this.skipButton = new PushButton( this );
+   this.skipButton.text = TAP_TR_UI( "Skip Star Stretch" );
+   this.skipButton.toolTip = TAP_TR_UI( "<p>Continue the workflow without stretching/rebuilding the stars.</p>" );
+
+   this.closePreview = function( preserveView )
+   {
+      TAPSTAR_closeViewQuietly( self.previewResult );
+      TAPSTAR_closeViewQuietly( self.previewInput );
+      self.previewResult = null;
+      self.previewInput = null;
+      self.previewControl.clear( preserveView );
+   };
+
+   this.refreshPreview = function()
+   {
+      if ( self.previewBusy || self.previewClosing ) return;
+      self.closePreview( true );
+      if ( !self.showPreview.checked )
+         return;
+
+      self.previewBusy = true;
+      try
+      {
+         var factor = TAPSTAR_previewZoomFactorFromIndex( self.zoom.currentItem );
+         self.previewInput = TAPSTAR_makeReducedPreviewSource(
+            starsView, factor, "AstroTemps_NBtoRGB_preview_src" );
+
+         var extracted = [];
+         try
+         {
+            var ha = TAPSTAR_extractChannel( self.previewInput, 0, "_HaPreview", extracted );
+            var oi = TAPSTAR_extractChannel( self.previewInput, 1, "_OIIIPreview", extracted );
+            self.previewResult = TAPSTAR_combineNBtoRGB(
+               ha, oi, self.ratio.value,
+               uniqueImageId( "AstroTemps_NBtoRGB_Preview" ), false );
+
+            TAPSTAR_applySCNR( self.previewResult );
+            TAPSTAR_applyMTF( self.previewResult );
+            TAPSTAR_applySCNR( self.previewResult );
+            TAPSTAR_reverseMTF( self.previewResult );
+            TAPSTAR_applyStarStretch(
+               self.previewResult, self.stretch.value, self.color.value );
+
+            self.previewControl.setImage( new Image( self.previewResult.image ) );
+         }
+         finally
+         {
+            TAPSTAR_closeExtractedChannels( extracted );
+         }
+      }
+      catch ( e )
+      {
+         self.closePreview();
+         TAP_UIMessageBox(
+            "Could not generate the Star Stretch preview.\n\n" + TAP_errorText( e ),
+            "AstroTemps - Star Stretch Preview",
+            StdIcon_Error, StdButton_Ok
+         ).execute();
+      }
+      finally { self.previewBusy = false; }
+   };
+
+   this.refresh.onClick = function() { self.refreshPreview(); };
+   this.showPreview.onCheck = function( checked )
+   {
+      if ( self.previewBusy || self.previewClosing ) return;
+      if ( checked ) self.refreshPreview();
+      else self.closePreview();
+   };
+   this.zoom.onItemSelected = function() { if ( self.showPreview.checked ) self.refreshPreview(); };
+
+   this.executeButton.onClick = function()
+   {
+      if ( self.previewBusy || self.previewClosing ) return;
+      self.closePreview();
+      s.starHaToOiiiRatio = self.ratio.value;
+      s.starStretchFactor = self.stretch.value;
+      s.starColorBoost = self.color.value;
+      s.starStretchPreviewZoom = TAPSTAR_previewZoomFactorFromIndex( self.zoom.currentItem );
+
+      self.previewBusy = true;
+      try { self.resultView = executeNBtoRGBStarStretch( starsView, s ); }
+      finally { self.previewBusy = false; }
+      self.applied = true;
+      self.ok();
+   };
+
+   this.cancelButton.onClick = function()
+   {
+      if ( self.previewBusy || self.previewClosing ) return;
+      self.closePreview();
+      self.cancel();
+   };
+
+   this.skipButton.onClick = function()
+   {
+      if ( self.previewBusy || self.previewClosing ) return;
+      self.closePreview();
+      self.skipped = true;
+      self.ok();
+   };
+
+   var zoomRow = new HorizontalSizer;
+   zoomRow.spacing = 6;
+   zoomRow.add( zoomLabel );
+   zoomRow.add( this.zoom );
+   zoomRow.add( this.refresh );
+   zoomRow.addStretch();
+
+   var buttons = new HorizontalSizer;
+   buttons.spacing = 6;
+   buttons.add( this.cancelButton );
+   buttons.add( this.skipButton );
+   buttons.addStretch();
+   buttons.add( this.executeButton );
+
+   this.sizer = new VerticalSizer;
+   this.sizer.margin = 10;
+   this.sizer.spacing = 7;
+   this.sizer.add( title );
+   this.sizer.add( info );
+   var parameters = new VerticalSizer;
+   parameters.spacing = 7;
+   parameters.addStretch();
+   parameters.add( this.ratio );
+   parameters.add( this.stretch );
+   parameters.add( this.color );
+   parameters.add( this.showPreview );
+   parameters.add( zoomRow );
+   parameters.addStretch();
+   var body = new HorizontalSizer;
+   body.spacing = 12;
+   body.add( parameters );
+   body.add( previewColumn, 100 );
+   this.sizer.add( body, 100 );
+   this.sizer.add( buttons );
+
+   this.adjustToContents();
+   this.setMinWidth( 1100 );
+
+   this.onClose = function()
+   {
+      if ( self.previewBusy ) return false;
+      self.previewClosing = true;
+      self.closePreview();
+      return true;
+   };
+   processEvents();
+   this.refreshPreview();
 }
 function TAPSTAR_NBtoRGBDialog(starsView, s) {
     this.__base__ = Dialog;
@@ -2737,151 +3100,243 @@ function TAPSTAR_NBtoRGBDialog(starsView, s) {
     TAPSTAR_NBtoRGBDialog_init.call(this, starsView, s);
 }
 TAPSTAR_NBtoRGBDialog.prototype = new Dialog;
-function TAPSTAR_SetiStarStretchDialog_init(starsView, s) {
-    var self = this;
-    this.windowTitle = "Star Stretch v2.6 - AstroTemps";
-    this.applied = false;
-    this.resultView = null;
-    this.previewInput = null;
-    this.previewResult = null;
-    var title = new Label(this);
-    title.useRichText = true;
-    title.textAlignment = TextAlign_HorzCenter | TextAlign_VertCenter;
-    title.text =
-        "<b><span style=\"font-size:14pt\">Star Stretch v2.6: Linear to Non-Linear Stretch<br/>" +
-            "of a Stars Only Image</span></b>";
-    var infoFrame = new Frame(this);
-    infoFrame.frameStyle = FrameStyle_Box;
-    var info = new Label(infoFrame);
-    info.wordWrapping = true;
-    info.text =
-        "Please select your combined stars only image to stretch\n" +
-            "Default value is a stretch of 5\n" +
-            "Default color boost value is 1\n\n" +
-            "Written by Franklin Marek. Copyright 2026";
-    infoFrame.sizer = new VerticalSizer;
-    infoFrame.sizer.margin = 6;
-    infoFrame.sizer.add(info);
-    var targetRow = new HorizontalSizer;
-    targetRow.spacing = 6;
-    var targetMarker = new CheckBox(this);
-    targetMarker.checked = true;
-    targetMarker.enabled = false;
-    var target = new Label(this);
-    target.text = starsView.id;
-    target.frameStyle = FrameStyle_Sunken;
-    target.minWidth = 480;
-    targetRow.add(targetMarker);
-    targetRow.add(target, 100);
-    this.stretch = new NumericControl(this);
-    this.stretch.label.text = "Stretch Amount:";
-    this.stretch.setRange(0.0, 8.0);
-    this.stretch.slider.setRange(0, 800);
-    this.stretch.setPrecision(2);
-    this.stretch.setValue(s.setiStarStretchAmount);
-    this.color = new NumericControl(this);
-    this.color.label.text = "Color Boost Amount:";
-    this.color.setRange(0.0, 3.0);
-    this.color.slider.setRange(0, 300);
-    this.color.setPrecision(2);
-    this.color.setValue(s.setiStarColorBoost);
-    this.removeGreen = new CheckBox(this);
-    this.removeGreen.text = "Remove Green via SCNR (Optional)";
-    this.removeGreen.checked = s.setiStarRemoveGreen;
-    this.showPreview = new CheckBox(this);
-    this.showPreview.text = "Show Preview";
-    this.showPreview.checked = true;
-    var zoomLabel = new Label(this);
-    zoomLabel.text = "Zoom:";
-    this.zoom = new ComboBox(this);
-    this.zoom.addItem("1:1");
-    this.zoom.addItem("1:2");
-    this.zoom.addItem("1:4");
-    this.zoom.addItem("1:8");
-    this.zoom.currentItem = TAPSTAR_previewZoomIndexFromFactor(s.starStretchPreviewZoom);
-    this.refresh = new PushButton(this);
-    this.refresh.text = "Refresh Preview";
-    this.executeButton = new PushButton(this);
-    this.executeButton.text = "Execute && Continue";
-    this.cancelButton = new PushButton(this);
-    this.cancelButton.text = "Cancel Workflow";
-    this.closePreview = function () {
-        TAPSTAR_closeViewQuietly(self.previewResult);
-        TAPSTAR_closeViewQuietly(self.previewInput);
-        self.previewResult = null;
-        self.previewInput = null;
-    };
-    this.refreshPreview = function () {
-        self.closePreview();
-        if (!self.showPreview.checked)
-            return;
-        try {
-            var factor = TAPSTAR_previewZoomFactorFromIndex(self.zoom.currentItem);
-            self.previewInput = TAPSTAR_makeReducedPreviewSource(starsView, factor, "AstroTemps_StarStretch_preview_src");
-            self.previewResult = TAPSTAR_processSetiStarStretch(self.previewInput, self.stretch.value, self.color.value, self.removeGreen.checked, uniqueImageId("AstroTemps_StarStretch_Preview"), true);
-            // The result is a clone; the temporary input is no longer needed.
-            TAPSTAR_closeViewQuietly(self.previewInput);
-            self.previewInput = null;
-            self.previewResult.window.show();
-            self.previewResult.window.bringToFront();
-            self.previewResult.window.zoomToOptimalFit();
-        }
-        catch (e) {
-            self.closePreview();
-            new MessageBox("Could not generate the Star Stretch preview.\n\n" + TAP_errorText(e), "AstroTemps - Star Stretch Preview", StdIcon_Error, StdButton_Ok).execute();
-        }
-    };
-    this.refresh.onClick = function () { self.refreshPreview(); };
-    this.showPreview.onCheck = function (checked) {
-        if (checked)
-            self.refreshPreview();
-        else
-            self.closePreview();
-    };
-    this.zoom.onItemSelected = function () { if (self.showPreview.checked)
-        self.refreshPreview(); };
-    this.executeButton.onClick = function () {
-        self.closePreview();
-        s.setiStarStretchAmount = self.stretch.value;
-        s.setiStarColorBoost = self.color.value;
-        s.setiStarRemoveGreen = self.removeGreen.checked;
-        s.starStretchPreviewZoom = TAPSTAR_previewZoomFactorFromIndex(self.zoom.currentItem);
-        self.resultView = TAPSTAR_processSetiStarStretch(starsView, s.setiStarStretchAmount, s.setiStarColorBoost, s.setiStarRemoveGreen, "NBtoRGB_stars", true);
-        self.applied = true;
-        self.ok();
-    };
-    this.cancelButton.onClick = function () {
-        self.closePreview();
-        self.cancel();
-    };
-    var zoomRow = new HorizontalSizer;
-    zoomRow.spacing = 6;
-    zoomRow.addSpacing(16);
-    zoomRow.add(zoomLabel);
-    zoomRow.add(this.zoom);
-    zoomRow.add(this.refresh);
-    zoomRow.addStretch();
-    var buttons = new HorizontalSizer;
-    buttons.spacing = 6;
-    buttons.add(this.cancelButton);
-    buttons.addStretch();
-    buttons.add(this.executeButton);
-    this.sizer = new VerticalSizer;
-    this.sizer.margin = 10;
-    this.sizer.spacing = 7;
-    this.sizer.add(title);
-    this.sizer.add(infoFrame);
-    this.sizer.add(targetRow);
-    this.sizer.add(this.stretch);
-    this.sizer.add(this.color);
-    this.sizer.add(this.removeGreen);
-    this.sizer.add(this.showPreview);
-    this.sizer.add(zoomRow);
-    this.sizer.add(buttons);
-    this.adjustToContents();
-    this.setFixedWidth(Math.max(760, this.width));
-    processEvents();
-    this.refreshPreview();
+function TAPSTAR_SetiStarStretchDialog_init( starsView, s )
+{
+   var self = this;
+   this.windowTitle = TAP_TR_UI( "Star Stretch v2.6 - AstroTemps" );
+   this.applied = false;
+   this.skipped = false;
+   this.resultView = null;
+   this.previewInput = null;
+   this.previewResult = null;
+   this.previewBusy = false;
+   this.previewClosing = false;
+   var previewColumn = TAPRH_addEmbeddedPreview( this );
+
+   var title = new Label( this );
+   title.useRichText = true;
+   title.textAlignment = TextAlign_HorzCenter | TextAlign_VertCenter;
+   title.text =
+      TAP_TR_UI( "<b><span style=\"font-size:14pt\">Star Stretch v2.6: Linear to Non-Linear Stretch<br/>" +
+      "of a Stars Only Image</span></b>" );
+
+   var infoFrame = new Frame( this );
+   infoFrame.frameStyle = FrameStyle_Box;
+   var info = new Label( infoFrame );
+   info.wordWrapping = true;
+   info.text =
+      TAP_TR_UI( "Please select your combined stars only image to stretch\n" +
+      "Default value is a stretch of 5\n" +
+      "Default color boost value is 1\n\n" +
+      "Written by Franklin Marek. Copyright 2026" );
+   infoFrame.sizer = new VerticalSizer;
+   infoFrame.sizer.margin = 6;
+   infoFrame.sizer.add( info );
+
+   var targetRow = new HorizontalSizer;
+   targetRow.spacing = 6;
+   var targetMarker = new CheckBox( this );
+   targetMarker.checked = true;
+   targetMarker.enabled = false;
+   var target = new Label( this );
+   target.text = TAP_TR_UI( starsView.id );
+   target.frameStyle = FrameStyle_Sunken;
+   target.minWidth = 480;
+   targetRow.add( targetMarker );
+   targetRow.add( target, 100 );
+
+   this.stretch = new NumericControl( this );
+   this.stretch.label.text = TAP_TR_UI( "Stretch Amount:" );
+   this.stretch.setRange( 0.0, 8.0 );
+   this.stretch.slider.setRange( 0, 800 );
+   this.stretch.setPrecision( 2 );
+   this.stretch.setValue( s.setiStarStretchAmount );
+
+   this.color = new NumericControl( this );
+   this.color.label.text = TAP_TR_UI( "Color Boost Amount:" );
+   this.color.setRange( 0.0, 3.0 );
+   this.color.slider.setRange( 0, 300 );
+   this.color.setPrecision( 2 );
+   this.color.setValue( s.setiStarColorBoost );
+
+   this.removeGreen = new CheckBox( this );
+   this.removeGreen.text = TAP_TR_UI( "Remove Green via SCNR (Optional)" );
+   this.removeGreen.checked = s.setiStarRemoveGreen;
+
+   this.showPreview = new CheckBox( this );
+   this.showPreview.text = TAP_TR_UI( "Show Preview" );
+   this.showPreview.checked = true;
+
+   var zoomLabel = new Label( this );
+   zoomLabel.text = TAP_TR_UI( "Preview resolution:" );
+   this.zoom = new ComboBox( this );
+   this.zoom.addItem( "1:1" );
+   this.zoom.addItem( "1:2" );
+   this.zoom.addItem( "1:4" );
+   this.zoom.addItem( "1:8" );
+   this.zoom.currentItem = TAPSTAR_previewZoomIndexFromFactor( s.starStretchPreviewZoom );
+
+   this.refresh = new PushButton( this );
+   this.refresh.text = TAP_TR_UI( "Refresh Preview" );
+
+   this.executeButton = new PushButton( this );
+   this.executeButton.text = TAP_TR_UI( "Execute && Continue" );
+
+   this.cancelButton = new PushButton( this );
+   this.cancelButton.text = TAP_TR_UI( "Cancel Workflow" );
+
+   this.skipButton = new PushButton( this );
+   this.skipButton.text = TAP_TR_UI( "Skip Star Stretch" );
+   this.skipButton.toolTip = TAP_TR_UI( "<p>Continue the workflow without stretching/rebuilding the stars.</p>" );
+
+   this.closePreview = function( preserveView )
+   {
+      TAPSTAR_closeViewQuietly( self.previewResult );
+      TAPSTAR_closeViewQuietly( self.previewInput );
+      self.previewResult = null;
+      self.previewInput = null;
+      self.previewControl.clear( preserveView );
+   };
+
+   this.refreshPreview = function()
+   {
+      if ( self.previewBusy || self.previewClosing ) return;
+      self.closePreview( true );
+      if ( !self.showPreview.checked )
+         return;
+
+      self.previewBusy = true;
+      try
+      {
+         var factor = TAPSTAR_previewZoomFactorFromIndex( self.zoom.currentItem );
+         self.previewInput = TAPSTAR_makeReducedPreviewSource(
+            starsView, factor, "AstroTemps_StarStretch_preview_src" );
+
+         self.previewResult = TAPSTAR_processSetiStarStretch(
+            self.previewInput,
+            self.stretch.value,
+            self.color.value,
+            self.removeGreen.checked,
+            uniqueImageId( "AstroTemps_StarStretch_Preview" ),
+            false
+         );
+
+         // The result is a clone; the temporary input is no longer needed.
+         TAPSTAR_closeViewQuietly( self.previewInput );
+         self.previewInput = null;
+
+         self.previewControl.setImage( new Image( self.previewResult.image ) );
+      }
+      catch ( e )
+      {
+         self.closePreview();
+         TAP_UIMessageBox(
+            "Could not generate the Star Stretch preview.\n\n" + TAP_errorText( e ),
+            "AstroTemps - Star Stretch Preview",
+            StdIcon_Error, StdButton_Ok
+         ).execute();
+      }
+      finally { self.previewBusy = false; }
+   };
+
+   this.refresh.onClick = function() { self.refreshPreview(); };
+   this.showPreview.onCheck = function( checked )
+   {
+      if ( self.previewBusy || self.previewClosing ) return;
+      if ( checked ) self.refreshPreview();
+      else self.closePreview();
+   };
+   this.zoom.onItemSelected = function() { if ( self.showPreview.checked ) self.refreshPreview(); };
+
+   this.executeButton.onClick = function()
+   {
+      if ( self.previewBusy || self.previewClosing ) return;
+      self.closePreview();
+
+      s.setiStarStretchAmount = self.stretch.value;
+      s.setiStarColorBoost = self.color.value;
+      s.setiStarRemoveGreen = self.removeGreen.checked;
+      s.starStretchPreviewZoom = TAPSTAR_previewZoomFactorFromIndex( self.zoom.currentItem );
+
+      self.previewBusy = true;
+      try { self.resultView = TAPSTAR_processSetiStarStretch(
+         starsView,
+         s.setiStarStretchAmount,
+         s.setiStarColorBoost,
+         s.setiStarRemoveGreen,
+         "NBtoRGB_stars",
+         true
+      ); }
+      finally { self.previewBusy = false; }
+
+      self.applied = true;
+      self.ok();
+   };
+
+   this.cancelButton.onClick = function()
+   {
+      if ( self.previewBusy || self.previewClosing ) return;
+      self.closePreview();
+      self.cancel();
+   };
+
+   this.skipButton.onClick = function()
+   {
+      if ( self.previewBusy || self.previewClosing ) return;
+      self.closePreview();
+      self.skipped = true;
+      self.ok();
+   };
+
+   var zoomRow = new HorizontalSizer;
+   zoomRow.spacing = 6;
+   zoomRow.addSpacing( 16 );
+   zoomRow.add( zoomLabel );
+   zoomRow.add( this.zoom );
+   zoomRow.add( this.refresh );
+   zoomRow.addStretch();
+
+   var buttons = new HorizontalSizer;
+   buttons.spacing = 6;
+   buttons.add( this.cancelButton );
+   buttons.add( this.skipButton );
+   buttons.addStretch();
+   buttons.add( this.executeButton );
+
+   this.sizer = new VerticalSizer;
+   this.sizer.margin = 10;
+   this.sizer.spacing = 7;
+   this.sizer.add( title );
+   this.sizer.add( infoFrame );
+   this.sizer.add( targetRow );
+   var parameters = new VerticalSizer;
+   parameters.spacing = 7;
+   parameters.addStretch();
+   parameters.add( this.stretch );
+   parameters.add( this.color );
+   parameters.add( this.removeGreen );
+   parameters.add( this.showPreview );
+   parameters.add( zoomRow );
+   parameters.addStretch();
+   var body = new HorizontalSizer;
+   body.spacing = 12;
+   body.add( parameters );
+   body.add( previewColumn, 100 );
+   this.sizer.add( body, 100 );
+   this.sizer.add( buttons );
+
+   this.adjustToContents();
+   this.setMinWidth( 1100 );
+
+   this.onClose = function()
+   {
+      if ( self.previewBusy ) return false;
+      self.previewClosing = true;
+      self.closePreview();
+      return true;
+   };
+   processEvents();
+   this.refreshPreview();
 }
 function TAPSTAR_SetiStarStretchDialog(starsView, s) {
     this.__base__ = Dialog;
@@ -5278,7 +5733,7 @@ function runCosmicClarityViaSasproCLI(selectedView) {
         }
     }
 }
-var VERSION = "1.0.0-legacy";
+var VERSION = "1.3.6";
 var ENGINE_RCASTRO = 0;
 var ENGINE_SASPRO = 1;
 var ADBE_ENGINE_SETIASTRO = 0;
@@ -7479,287 +7934,363 @@ function TAPNBN_PreviewControl(parent) {
     TAPNBN_PreviewControl_init.call(this, parent);
 }
 TAPNBN_PreviewControl.prototype = new ScrollBox;
-function TAPNBN_InteractiveDialog_init(targetView, workflowSettings, inputIsNonlinear) {
-    var dialog = this;
-    this.targetView = targetView;
-    this.settings = TAPNBN_copySettings(workflowSettings);
-    this.applied = false;
-    this.skipped = false;
-    this.previewBusy = false;
-    this.previewQueued = false;
-    this.previewTimer = null;
-    this.inputIsNonlinear = !!inputIsNonlinear;
-    var base = TAPNBN_makePreviewImage(targetView.image, 860, 570);
-    this.basePreviewImage = base.image;
-    this.previewFactor = base.factor;
-    this.currentSettings = function () {
-        return {
-            nbnPalette: dialog.palette_Combo.itemText(dialog.palette_Combo.currentItem),
-            nbnLightness: dialog.lightness_Combo.itemText(dialog.lightness_Combo.currentItem),
-            nbnBlendMode: dialog.blendMode_Combo.itemText(dialog.blendMode_Combo.currentItem),
-            nbnHaBlend: dialog.haBlend_Control.value,
-            nbnSCNR: dialog.scnr_Control.value,
-            nbnO3Boost: dialog.o3Boost_Control.value,
-            nbnS2Boost: dialog.s2Boost_Control.value,
-            nbnShadowPoint: dialog.shadowPoint_Control.value,
-            nbnHighlightReduction: dialog.highlightReduction_Control.value,
-            nbnBrightness: dialog.brightness_Control.value
-        };
-    };
-    this.updatePaletteState = function () {
-        var hoo = dialog.palette_Combo.itemText(dialog.palette_Combo.currentItem) == "HOO";
-        dialog.green_Group.enabled = hoo;
-        dialog.s2Boost_Control.enabled = !hoo;
-    };
-    this.updatePreview = function () {
-        if (dialog.previewBusy) {
-            dialog.previewQueued = true;
-            return;
-        }
-        dialog.previewBusy = true;
-        dialog.status_Label.text = "Updating preview...";
-        dialog.status_Label.update();
-        processEvents();
-        try {
-            var cfg = dialog.currentSettings();
-            var image = TAPNBN_renderPreviewImage(dialog.basePreviewImage, cfg, dialog.inputIsNonlinear);
-            dialog.previewControl.setImage(image);
-            dialog.status_Label.text =
-                "Preview updated | target: " + targetView.id +
-                    " | scale 1:" + dialog.previewFactor +
-                    (dialog.inputIsNonlinear ? " | post-stretch / nonlinear" : " | pre-stretch preview (temporary linked stretch)");
-            if (!dialog.inputIsNonlinear && cfg.nbnLightness != "Off")
-                dialog.status_Label.text += " | Warning: Lightness should remain Off for linear data";
-        }
-        catch (e) {
-            dialog.status_Label.text = "Preview error: " + TAP_errorText(e);
-        }
-        finally {
-            dialog.previewBusy = false;
-            if (dialog.previewQueued) {
-                dialog.previewQueued = false;
-                dialog.schedulePreview();
-            }
-        }
-    };
-    this.schedulePreview = function () {
-        if (dialog.previewBusy) {
-            dialog.previewQueued = true;
-            return;
-        }
-        if (dialog.previewTimer != null)
-            dialog.previewTimer.stop();
-        dialog.previewTimer = new Timer;
-        dialog.previewTimer.interval = 0.30;
-        dialog.previewTimer.singleShot = true;
-        dialog.previewTimer.onTimeout = function () {
-            dialog.previewTimer = null;
-            dialog.updatePreview();
-        };
-        dialog.previewTimer.start();
-    };
-    this.resetNBN = function () {
-        TAP_comboSelectText(dialog.palette_Combo, "HOO");
-        TAP_comboSelectText(dialog.lightness_Combo, "Off");
-        TAP_comboSelectText(dialog.blendMode_Combo, "Mode1");
-        dialog.haBlend_Control.setValue(0.600);
-        dialog.scnr_Control.setValue(0.000);
-        dialog.o3Boost_Control.setValue(1.000);
-        dialog.s2Boost_Control.setValue(1.000);
-        dialog.shadowPoint_Control.setValue(1.000);
-        dialog.highlightReduction_Control.setValue(1.000);
-        dialog.brightness_Control.setValue(1.000);
-        dialog.updatePaletteState();
-        dialog.schedulePreview();
-    };
-    this.previewControl = new TAPNBN_PreviewControl(this);
-    this.previewControl.setMinWidth(860);
-    this.previewControl.setMinHeight(570);
-    this.status_Label = new Label(this);
-    this.status_Label.text = "Preparing live NBN preview...";
-    this.status_Label.wordWrapping = true;
-    function comboRow(parent, labelText, items, value) {
-        var row = new HorizontalSizer;
-        row.spacing = 6;
-        var label = new Label(parent);
-        label.text = labelText;
-        label.textAlignment = TextAlign_Right | TextAlign_VertCenter;
-        label.setMinWidth(92);
-        var combo = new ComboBox(parent);
-        for (var i = 0; i < items.length; ++i)
-            combo.addItem(items[i]);
-        TAP_comboSelectText(combo, value);
-        row.add(label);
-        row.add(combo, 100);
-        return { row: row, combo: combo };
-    }
-    this.palette_Group = new GroupBox(this);
-    this.palette_Group.title = "Palette";
-    var paletteRow = comboRow(this.palette_Group, "Palette:", ["HOO", "SHO", "HSO"], this.settings.nbnPalette);
-    this.palette_Combo = paletteRow.combo;
-    this.palette_Group.sizer = new VerticalSizer;
-    this.palette_Group.sizer.margin = 8;
-    this.palette_Group.sizer.add(paletteRow.row);
-    this.lightness_Group = new GroupBox(this);
-    this.lightness_Group.title = "Lightness";
-    var lightnessRow = comboRow(this.lightness_Group, "Lightness:", ["Off", "Preserve", "Ha", "OIII", "SII"], this.settings.nbnLightness);
-    this.lightness_Combo = lightnessRow.combo;
-    this.lightness_Group.sizer = new VerticalSizer;
-    this.lightness_Group.sizer.margin = 8;
-    this.lightness_Group.sizer.add(lightnessRow.row);
-    this.green_Group = new GroupBox(this);
-    this.green_Group.title = "Synthetic green blend";
-    var blendRow = comboRow(this.green_Group, "Blend mode:", ["Mode1", "Mode2", "Mode3"], this.settings.nbnBlendMode);
-    this.blendMode_Combo = blendRow.combo;
-    this.haBlend_Control = new NumericControl(this.green_Group);
-    this.haBlend_Control.label.text = "Blend amount:";
-    this.haBlend_Control.setRange(0.0, 1.0);
-    this.haBlend_Control.slider.setRange(0, 1000);
-    this.haBlend_Control.setPrecision(3);
-    this.haBlend_Control.setValue(this.settings.nbnHaBlend);
-    this.green_Group.sizer = new VerticalSizer;
-    this.green_Group.sizer.margin = 8;
-    this.green_Group.sizer.spacing = 5;
-    this.green_Group.sizer.add(blendRow.row);
-    this.green_Group.sizer.add(this.haBlend_Control);
-    this.channel_Group = new GroupBox(this);
-    this.channel_Group.title = "Channel controls";
-    this.scnr_Control = new NumericControl(this.channel_Group);
-    this.scnr_Control.label.text = "SCNR:";
-    this.scnr_Control.setRange(0.0, 1.0);
-    this.scnr_Control.slider.setRange(0, 1000);
-    this.scnr_Control.setPrecision(3);
-    this.scnr_Control.setValue(this.settings.nbnSCNR);
-    this.o3Boost_Control = new NumericControl(this.channel_Group);
-    this.o3Boost_Control.label.text = "OIII boost:";
-    this.o3Boost_Control.setRange(0.5, 2.0);
-    this.o3Boost_Control.slider.setRange(0, 1500);
-    this.o3Boost_Control.setPrecision(3);
-    this.o3Boost_Control.setValue(this.settings.nbnO3Boost);
-    this.s2Boost_Control = new NumericControl(this.channel_Group);
-    this.s2Boost_Control.label.text = "SII boost:";
-    this.s2Boost_Control.setRange(0.5, 2.0);
-    this.s2Boost_Control.slider.setRange(0, 1500);
-    this.s2Boost_Control.setPrecision(3);
-    this.s2Boost_Control.setValue(this.settings.nbnS2Boost);
-    this.channel_Group.sizer = new VerticalSizer;
-    this.channel_Group.sizer.margin = 8;
-    this.channel_Group.sizer.spacing = 5;
-    this.channel_Group.sizer.add(this.scnr_Control);
-    this.channel_Group.sizer.add(this.o3Boost_Control);
-    this.channel_Group.sizer.add(this.s2Boost_Control);
-    this.adjust_Group = new GroupBox(this);
-    this.adjust_Group.title = "Adjustments";
-    this.shadowPoint_Control = new NumericControl(this.adjust_Group);
-    this.shadowPoint_Control.label.text = "Shadow point:";
-    this.shadowPoint_Control.setRange(0.0, 1.0);
-    this.shadowPoint_Control.slider.setRange(0, 1000);
-    this.shadowPoint_Control.setPrecision(3);
-    this.shadowPoint_Control.setValue(this.settings.nbnShadowPoint);
-    this.highlightReduction_Control = new NumericControl(this.adjust_Group);
-    this.highlightReduction_Control.label.text = "Highlight reduction:";
-    this.highlightReduction_Control.setRange(0.5, 2.0);
-    this.highlightReduction_Control.slider.setRange(0, 1500);
-    this.highlightReduction_Control.setPrecision(3);
-    this.highlightReduction_Control.setValue(this.settings.nbnHighlightReduction);
-    this.brightness_Control = new NumericControl(this.adjust_Group);
-    this.brightness_Control.label.text = "Brightness:";
-    this.brightness_Control.setRange(0.5, 2.0);
-    this.brightness_Control.slider.setRange(0, 1500);
-    this.brightness_Control.setPrecision(3);
-    this.brightness_Control.setValue(this.settings.nbnBrightness);
-    this.adjust_Group.sizer = new VerticalSizer;
-    this.adjust_Group.sizer.margin = 8;
-    this.adjust_Group.sizer.spacing = 5;
-    this.adjust_Group.sizer.add(this.shadowPoint_Control);
-    this.adjust_Group.sizer.add(this.highlightReduction_Control);
-    this.adjust_Group.sizer.add(this.brightness_Control);
-    this.reset_Button = new PushButton(this);
-    this.reset_Button.text = "Reset";
-    this.reset_Button.onClick = function () { dialog.resetNBN(); };
-    this.skip_Button = new PushButton(this);
-    this.skip_Button.text = "Skip NBN";
-    this.skip_Button.onClick = function () {
-        if (dialog.previewTimer != null)
-            dialog.previewTimer.stop();
-        dialog.skipped = true;
-        dialog.ok();
-    };
-    this.cancel_Button = new PushButton(this);
-    this.cancel_Button.text = "Cancel Workflow";
-    this.cancel_Button.onClick = function () {
-        if (dialog.previewTimer != null)
-            dialog.previewTimer.stop();
-        dialog.cancel();
-    };
-    this.apply_Button = new PushButton(this);
-    this.apply_Button.text = "Apply && Continue";
-    this.apply_Button.defaultButton = true;
-    this.apply_Button.onClick = function () {
-        if (dialog.previewTimer != null)
-            dialog.previewTimer.stop();
-        var cfg = dialog.currentSettings();
-        dialog.status_Label.text = "Applying Narrowband Normalization to " + targetView.id + "...";
-        processEvents();
-        try {
-            TAP_applyNBNToView(targetView, cfg, false);
-            TAPNBN_applySettingsBack(workflowSettings, cfg);
-            dialog.applied = true;
-            dialog.ok();
-        }
-        catch (e) {
-            dialog.status_Label.text = "Apply error: " + TAP_errorText(e);
-            (new MessageBox("Narrowband Normalization could not be applied.\n\n" + TAP_errorText(e), "AstroTemps AutoProcessing Tool - NBN", StdIcon_Error, StdButton_Ok)).execute();
-        }
-    };
-    this.palette_Combo.onItemSelected = function () {
-        dialog.updatePaletteState();
-        dialog.schedulePreview();
-    };
-    this.lightness_Combo.onItemSelected = function () { dialog.schedulePreview(); };
-    this.blendMode_Combo.onItemSelected = function () { dialog.schedulePreview(); };
-    this.haBlend_Control.onValueUpdated = function () { dialog.schedulePreview(); };
-    this.scnr_Control.onValueUpdated = function () { dialog.schedulePreview(); };
-    this.o3Boost_Control.onValueUpdated = function () { dialog.schedulePreview(); };
-    this.s2Boost_Control.onValueUpdated = function () { dialog.schedulePreview(); };
-    this.shadowPoint_Control.onValueUpdated = function () { dialog.schedulePreview(); };
-    this.highlightReduction_Control.onValueUpdated = function () { dialog.schedulePreview(); };
-    this.brightness_Control.onValueUpdated = function () { dialog.schedulePreview(); };
-    var controlsSizer = new VerticalSizer;
-    controlsSizer.spacing = 6;
-    controlsSizer.add(this.palette_Group);
-    controlsSizer.add(this.lightness_Group);
-    controlsSizer.add(this.green_Group);
-    controlsSizer.add(this.channel_Group);
-    controlsSizer.add(this.adjust_Group);
-    controlsSizer.addStretch();
-    var previewSizer = new VerticalSizer;
-    previewSizer.spacing = 4;
-    previewSizer.add(this.previewControl, 100);
-    previewSizer.add(this.status_Label);
-    var bodySizer = new HorizontalSizer;
-    bodySizer.spacing = 8;
-    bodySizer.add(previewSizer, 100);
-    bodySizer.add(controlsSizer);
-    var buttonSizer = new HorizontalSizer;
-    buttonSizer.spacing = 6;
-    buttonSizer.add(this.reset_Button);
-    buttonSizer.addStretch();
-    buttonSizer.add(this.skip_Button);
-    buttonSizer.add(this.cancel_Button);
-    buttonSizer.add(this.apply_Button);
-    this.sizer = new VerticalSizer;
-    this.sizer.margin = 8;
-    this.sizer.spacing = 8;
-    this.sizer.add(bodySizer, 100);
-    this.sizer.add(buttonSizer);
-    this.windowTitle = "Narrowband Normalization - Interactive Preview";
-    this.setMinWidth(1180);
-    this.setMinHeight(680);
-    this.updatePaletteState();
-    this.onShow = function () {
-        dialog.schedulePreview();
-    };
+function TAPNBN_InteractiveDialog_init( targetView, workflowSettings, inputIsNonlinear )
+{
+   var dialog = this;
+   this.targetView = targetView;
+   this.settings = TAPNBN_copySettings( workflowSettings );
+   this.applied = false;
+   this.skipped = false;
+   this.previewClosing = false;
+   this.previewBusy = false;
+   this.previewQueued = false;
+   this.previewTimer = null;
+   this.inputIsNonlinear = !!inputIsNonlinear;
+
+   var base = TAPNBN_makePreviewImage( targetView.image, 860, 570 );
+   this.basePreviewImage = base.image;
+   this.previewFactor = base.factor;
+
+   this.currentSettings = function()
+   {
+      return {
+         nbnPalette: dialog.palette_Combo.itemText( dialog.palette_Combo.currentItem ),
+         nbnLightness: dialog.lightness_Combo.itemText( dialog.lightness_Combo.currentItem ),
+         nbnBlendMode: dialog.blendMode_Combo.itemText( dialog.blendMode_Combo.currentItem ),
+         nbnHaBlend: dialog.haBlend_Control.value,
+         nbnSCNR: dialog.scnr_Control.value,
+         nbnO3Boost: dialog.o3Boost_Control.value,
+         nbnS2Boost: dialog.s2Boost_Control.value,
+         nbnShadowPoint: dialog.shadowPoint_Control.value,
+         nbnHighlightReduction: dialog.highlightReduction_Control.value,
+         nbnBrightness: dialog.brightness_Control.value
+      };
+   };
+
+   this.updatePaletteState = function()
+   {
+      var hoo = dialog.palette_Combo.itemText( dialog.palette_Combo.currentItem ) == "HOO";
+      dialog.green_Group.enabled = hoo;
+      dialog.s2Boost_Control.enabled = !hoo;
+   };
+
+   this.updatePreview = function()
+   {
+      if ( dialog.previewClosing ) return;
+      if ( dialog.previewBusy )
+      {
+         dialog.previewQueued = true;
+         return;
+      }
+
+      dialog.previewBusy = true;
+      dialog.status_Label.text = TAP_TR_UI( "Updating preview..." );
+      dialog.status_Label.update();
+      processEvents();
+
+      try
+      {
+         var cfg = dialog.currentSettings();
+         var image = TAPNBN_renderPreviewImage( dialog.basePreviewImage, cfg, dialog.inputIsNonlinear );
+         dialog.previewControl.setImage( image );
+         dialog.status_Label.text =
+            TAP_TR_UI( "Preview updated | target: " + targetView.id +
+            " | scale 1:" + dialog.previewFactor +
+            ( dialog.inputIsNonlinear ? " | post-stretch / nonlinear" : " | pre-stretch preview (temporary linked stretch)" ) );
+
+         if ( !dialog.inputIsNonlinear && cfg.nbnLightness != "Off" )
+            dialog.status_Label.text += " | Warning: Lightness should remain Off for linear data";
+      }
+      catch ( e )
+      {
+         dialog.status_Label.text = TAP_TR_UI( "Preview error: " + TAP_errorText( e ) );
+      }
+      finally
+      {
+         dialog.previewBusy = false;
+         if ( dialog.previewQueued )
+         {
+            dialog.previewQueued = false;
+            dialog.schedulePreview();
+         }
+      }
+   };
+
+   this.schedulePreview = function()
+   {
+      if ( dialog.previewClosing ) return;
+      if ( dialog.previewBusy )
+      {
+         dialog.previewQueued = true;
+         return;
+      }
+
+      if ( dialog.previewTimer != null )
+         dialog.previewTimer.stop();
+
+      dialog.previewTimer = new Timer;
+      dialog.previewTimer.interval = 0.30;
+      dialog.previewTimer.singleShot = true;
+      dialog.previewTimer.onTimeout = function()
+      {
+         dialog.previewTimer = null;
+         dialog.updatePreview();
+      };
+      dialog.previewTimer.start();
+   };
+
+   this.resetNBN = function()
+   {
+      TAP_comboSelectText( dialog.palette_Combo, "HOO" );
+      TAP_comboSelectText( dialog.lightness_Combo, "Off" );
+      TAP_comboSelectText( dialog.blendMode_Combo, "Mode1" );
+      dialog.haBlend_Control.setValue( 0.600 );
+      dialog.scnr_Control.setValue( 0.000 );
+      dialog.o3Boost_Control.setValue( 1.000 );
+      dialog.s2Boost_Control.setValue( 1.000 );
+      dialog.shadowPoint_Control.setValue( 1.000 );
+      dialog.highlightReduction_Control.setValue( 1.000 );
+      dialog.brightness_Control.setValue( 1.000 );
+      dialog.updatePaletteState();
+      dialog.schedulePreview();
+   };
+
+   var embeddedPreview = TAPRH_addEmbeddedPreview( this );
+   this.previewControl.setMinWidth( 860 );
+   this.previewControl.setMinHeight( 570 );
+
+   this.status_Label = new Label( this );
+   this.status_Label.text = TAP_TR_UI( "Preparing live NBN preview..." );
+   this.status_Label.wordWrapping = true;
+
+   function comboRow( parent, labelText, items, value )
+   {
+      var row = new HorizontalSizer;
+      row.spacing = 6;
+      var label = new Label( parent );
+      label.text = TAP_TR_UI( labelText );
+      label.textAlignment = TextAlign_Right | TextAlign_VertCenter;
+      label.setMinWidth( 92 );
+      var combo = new ComboBox( parent );
+      for ( var i = 0; i < items.length; ++i ) combo.addItem( items[i] );
+      TAP_comboSelectText( combo, value );
+      row.add( label );
+      row.add( combo, 100 );
+      return { row: row, combo: combo };
+   }
+
+   this.palette_Group = new GroupBox( this );
+   this.palette_Group.title = TAP_TR_UI( "Palette" );
+   var paletteRow = comboRow( this.palette_Group, "Palette:", [ "HOO", "SHO", "HSO" ], this.settings.nbnPalette );
+   this.palette_Combo = paletteRow.combo;
+   this.palette_Group.sizer = new VerticalSizer;
+   this.palette_Group.sizer.margin = 8;
+   this.palette_Group.sizer.add( paletteRow.row );
+
+   this.lightness_Group = new GroupBox( this );
+   this.lightness_Group.title = TAP_TR_UI( "Lightness" );
+   var lightnessRow = comboRow( this.lightness_Group, "Lightness:", [ "Off", "Preserve", "Ha", "OIII", "SII" ], this.settings.nbnLightness );
+   this.lightness_Combo = lightnessRow.combo;
+   this.lightness_Group.sizer = new VerticalSizer;
+   this.lightness_Group.sizer.margin = 8;
+   this.lightness_Group.sizer.add( lightnessRow.row );
+
+   this.green_Group = new GroupBox( this );
+   this.green_Group.title = TAP_TR_UI( "Synthetic green blend" );
+   var blendRow = comboRow( this.green_Group, "Blend mode:", [ "Mode1", "Mode2", "Mode3" ], this.settings.nbnBlendMode );
+   this.blendMode_Combo = blendRow.combo;
+   this.haBlend_Control = new NumericControl( this.green_Group );
+   this.haBlend_Control.label.text = TAP_TR_UI( "Blend amount:" );
+   this.haBlend_Control.setRange( 0.0, 1.0 );
+   this.haBlend_Control.slider.setRange( 0, 1000 );
+   this.haBlend_Control.setPrecision( 3 );
+   this.haBlend_Control.setValue( this.settings.nbnHaBlend );
+   this.green_Group.sizer = new VerticalSizer;
+   this.green_Group.sizer.margin = 8;
+   this.green_Group.sizer.spacing = 5;
+   this.green_Group.sizer.add( blendRow.row );
+   this.green_Group.sizer.add( this.haBlend_Control );
+
+   this.channel_Group = new GroupBox( this );
+   this.channel_Group.title = TAP_TR_UI( "Channel controls" );
+   this.scnr_Control = new NumericControl( this.channel_Group );
+   this.scnr_Control.label.text = TAP_TR_UI( "SCNR:" );
+   this.scnr_Control.setRange( 0.0, 1.0 );
+   this.scnr_Control.slider.setRange( 0, 1000 );
+   this.scnr_Control.setPrecision( 3 );
+   this.scnr_Control.setValue( this.settings.nbnSCNR );
+
+   this.o3Boost_Control = new NumericControl( this.channel_Group );
+   this.o3Boost_Control.label.text = TAP_TR_UI( "OIII boost:" );
+   this.o3Boost_Control.setRange( 0.5, 2.0 );
+   this.o3Boost_Control.slider.setRange( 0, 1500 );
+   this.o3Boost_Control.setPrecision( 3 );
+   this.o3Boost_Control.setValue( this.settings.nbnO3Boost );
+
+   this.s2Boost_Control = new NumericControl( this.channel_Group );
+   this.s2Boost_Control.label.text = TAP_TR_UI( "SII boost:" );
+   this.s2Boost_Control.setRange( 0.5, 2.0 );
+   this.s2Boost_Control.slider.setRange( 0, 1500 );
+   this.s2Boost_Control.setPrecision( 3 );
+   this.s2Boost_Control.setValue( this.settings.nbnS2Boost );
+
+   this.channel_Group.sizer = new VerticalSizer;
+   this.channel_Group.sizer.margin = 8;
+   this.channel_Group.sizer.spacing = 5;
+   this.channel_Group.sizer.add( this.scnr_Control );
+   this.channel_Group.sizer.add( this.o3Boost_Control );
+   this.channel_Group.sizer.add( this.s2Boost_Control );
+
+   this.adjust_Group = new GroupBox( this );
+   this.adjust_Group.title = TAP_TR_UI( "Adjustments" );
+   this.shadowPoint_Control = new NumericControl( this.adjust_Group );
+   this.shadowPoint_Control.label.text = TAP_TR_UI( "Shadow point:" );
+   this.shadowPoint_Control.setRange( 0.0, 1.0 );
+   this.shadowPoint_Control.slider.setRange( 0, 1000 );
+   this.shadowPoint_Control.setPrecision( 3 );
+   this.shadowPoint_Control.setValue( this.settings.nbnShadowPoint );
+
+   this.highlightReduction_Control = new NumericControl( this.adjust_Group );
+   this.highlightReduction_Control.label.text = TAP_TR_UI( "Highlight reduction:" );
+   this.highlightReduction_Control.setRange( 0.5, 2.0 );
+   this.highlightReduction_Control.slider.setRange( 0, 1500 );
+   this.highlightReduction_Control.setPrecision( 3 );
+   this.highlightReduction_Control.setValue( this.settings.nbnHighlightReduction );
+
+   this.brightness_Control = new NumericControl( this.adjust_Group );
+   this.brightness_Control.label.text = TAP_TR_UI( "Brightness:" );
+   this.brightness_Control.setRange( 0.5, 2.0 );
+   this.brightness_Control.slider.setRange( 0, 1500 );
+   this.brightness_Control.setPrecision( 3 );
+   this.brightness_Control.setValue( this.settings.nbnBrightness );
+
+   this.adjust_Group.sizer = new VerticalSizer;
+   this.adjust_Group.sizer.margin = 8;
+   this.adjust_Group.sizer.spacing = 5;
+   this.adjust_Group.sizer.add( this.shadowPoint_Control );
+   this.adjust_Group.sizer.add( this.highlightReduction_Control );
+   this.adjust_Group.sizer.add( this.brightness_Control );
+
+   this.reset_Button = new PushButton( this );
+   this.reset_Button.text = TAP_TR_UI( "Reset" );
+   this.reset_Button.onClick = function() { dialog.resetNBN(); };
+
+   this.skip_Button = new PushButton( this );
+   this.skip_Button.text = TAP_TR_UI( "Skip NBN" );
+   this.skip_Button.onClick = function()
+   {
+      if ( dialog.previewBusy || dialog.previewClosing ) return;
+      if ( dialog.previewTimer != null ) dialog.previewTimer.stop();
+      dialog.skipped = true;
+      dialog.ok();
+   };
+
+   this.cancel_Button = new PushButton( this );
+   this.cancel_Button.text = TAP_TR_UI( "Cancel Workflow" );
+   this.cancel_Button.onClick = function()
+   {
+      if ( dialog.previewBusy || dialog.previewClosing ) return;
+      if ( dialog.previewTimer != null ) dialog.previewTimer.stop();
+      dialog.cancel();
+   };
+
+   this.apply_Button = new PushButton( this );
+   this.apply_Button.text = TAP_TR_UI( "Apply && Continue" );
+   this.apply_Button.defaultButton = true;
+   this.apply_Button.onClick = function()
+   {
+      if ( dialog.previewBusy || dialog.previewClosing ) return;
+      if ( dialog.previewTimer != null ) dialog.previewTimer.stop();
+      dialog.previewBusy = true;
+      var cfg = dialog.currentSettings();
+      dialog.status_Label.text = TAP_TR_UI( "Applying Narrowband Normalization to " + targetView.id + "..." );
+      processEvents();
+
+      try
+      {
+         TAP_applyNBNToView( targetView, cfg, false );
+         TAPNBN_applySettingsBack( workflowSettings, cfg );
+         dialog.applied = true;
+         dialog.previewBusy = false;
+         dialog.ok();
+      }
+      catch ( e )
+      {
+         dialog.previewBusy = false;
+         dialog.status_Label.text = TAP_TR_UI( "Apply error: " + TAP_errorText( e ) );
+         ( TAP_UIMessageBox(
+            "Narrowband Normalization could not be applied.\n\n" + TAP_errorText( e ),
+            "AstroTemps AutoProcessing Tool - NBN",
+            StdIcon_Error,
+            StdButton_Ok
+         ) ).execute();
+      }
+   };
+
+   this.palette_Combo.onItemSelected = function()
+   {
+      dialog.updatePaletteState();
+      dialog.schedulePreview();
+   };
+   this.lightness_Combo.onItemSelected = function() { dialog.schedulePreview(); };
+   this.blendMode_Combo.onItemSelected = function() { dialog.schedulePreview(); };
+   this.haBlend_Control.onValueUpdated = function() { dialog.schedulePreview(); };
+   this.scnr_Control.onValueUpdated = function() { dialog.schedulePreview(); };
+   this.o3Boost_Control.onValueUpdated = function() { dialog.schedulePreview(); };
+   this.s2Boost_Control.onValueUpdated = function() { dialog.schedulePreview(); };
+   this.shadowPoint_Control.onValueUpdated = function() { dialog.schedulePreview(); };
+   this.highlightReduction_Control.onValueUpdated = function() { dialog.schedulePreview(); };
+   this.brightness_Control.onValueUpdated = function() { dialog.schedulePreview(); };
+
+   var controlsSizer = new VerticalSizer;
+   controlsSizer.spacing = 6;
+   controlsSizer.add( this.palette_Group );
+   controlsSizer.add( this.lightness_Group );
+   controlsSizer.add( this.green_Group );
+   controlsSizer.add( this.channel_Group );
+   controlsSizer.add( this.adjust_Group );
+   controlsSizer.addStretch();
+
+   var previewSizer = new VerticalSizer;
+   previewSizer.spacing = 4;
+   previewSizer.add( embeddedPreview, 100 );
+   previewSizer.add( this.status_Label );
+
+   var bodySizer = new HorizontalSizer;
+   bodySizer.spacing = 8;
+   bodySizer.add( previewSizer, 100 );
+   bodySizer.add( controlsSizer );
+
+   var buttonSizer = new HorizontalSizer;
+   buttonSizer.spacing = 6;
+   buttonSizer.add( this.reset_Button );
+   buttonSizer.addStretch();
+   buttonSizer.add( this.skip_Button );
+   buttonSizer.add( this.cancel_Button );
+   buttonSizer.add( this.apply_Button );
+
+   this.sizer = new VerticalSizer;
+   this.sizer.margin = 8;
+   this.sizer.spacing = 8;
+   this.sizer.add( bodySizer, 100 );
+   this.sizer.add( buttonSizer );
+
+   this.windowTitle = TAP_TR_UI( "Narrowband Normalization - Interactive Preview" );
+   this.setMinWidth( 1180 );
+   this.setMinHeight( 680 );
+   this.updatePaletteState();
+
+   this.onClose = function()
+   {
+      if ( dialog.previewBusy ) return false;
+      dialog.previewClosing = true;
+      if ( dialog.previewTimer != null ) dialog.previewTimer.stop();
+      return true;
+   };
+   this.onShow = function()
+   {
+      dialog.schedulePreview();
+   };
 }
 function TAPNBN_InteractiveDialog(targetView, workflowSettings, inputIsNonlinear) {
     this.__base__ = Dialog;
@@ -7785,8 +8316,8 @@ function TAP_executeNarrowbandNormalizationInteractive(view, s, inputIsNonlinear
     try {
         if (d.basePreviewImage != null)
             d.basePreviewImage.free();
-        if (d.previewControl != null && d.previewControl.displayImage != null)
-            d.previewControl.displayImage.free();
+        if (d.previewTimer != null) d.previewTimer.stop();
+        if (d.previewControl != null) d.previewControl.clear();
     }
     catch (eFree) { }
     if (!accepted)
@@ -15477,7 +16008,7 @@ function DialogUI_init() {
             var sliderMaxValue = this.slider.maxValue;
             var sliderDelta = sliderMaxValue - sliderMinValue;
             var sliderNormValue = Math.range((sliderValue - sliderMinValue) / sliderDelta, 0, 1);
-            return Math.range(Math.roundTo(this.lowerBound + (this.upperBound - this.lowerBound) * sliderNormValue, 
+            return Math.range(Math.roundTo(this.lowerBound + (this.upperBound - this.lowerBound) * sliderNormValue,
             // Never keep more decimals than the box can show, or the stored value
             // and the displayed one silently disagree (0.125 shown as "0.13").
             this.real ? Math.min(this.precision, Math.max(0, Math.trunc(Math.log10(this.slider.maxValue - this.slider.minValue))))
@@ -18593,6 +19124,21 @@ function TAP_executeLighthouse(view) {
                 }
             };
         }
+        if (lighthouseDialog.button_Sizer != null) {
+            lighthouseDialog.astroTempsSkip_Button = new PushButton(lighthouseDialog);
+            lighthouseDialog.astroTempsSkip_Button.text = "Skip Lighthouse";
+            lighthouseDialog.astroTempsSkip_Button.onClick = function() {
+                if (lighthouseDialog.timer) lighthouseDialog.timer.stop();
+                lighthouseDialog.skipped = true;
+                lighthouseDialog.ok();
+            };
+            lighthouseDialog.button_Sizer.remove(lighthouseDialog.applyContinue_Button);
+            lighthouseDialog.button_Sizer.remove(lighthouseDialog.cancel_Button);
+            lighthouseDialog.cancel_Button.hide();
+            lighthouseDialog.button_Sizer.add(lighthouseDialog.astroTempsSkip_Button);
+            lighthouseDialog.button_Sizer.add(lighthouseDialog.applyContinue_Button);
+            lighthouseDialog.adjustToContents();
+        }
     }
     catch (eSelectLighthouseTarget) {
         console.warningln("Lighthouse target preselection warning: " + eSelectLighthouseTarget.message);
@@ -18606,7 +19152,7 @@ function TAP_executeLighthouse(view) {
     processEvents();
     if (!accepted)
         throw new Error("Lighthouse was cancelled. Workflow stopped before the star stages.");
-    console.noteln("Lighthouse editing completed.");
+    console.noteln(lighthouseDialog.skipped ? "Lighthouse skipped." : "Lighthouse editing completed.");
 }
 function TAP_runFullStarRemovalWithFallback(ctx, s) {
     var view = ctx.workView;
@@ -18856,17 +19402,72 @@ function runWorkflow(sourceView, s) {
 function AstroTempsAutoProcessingDialog_init(initialSettings) {
     var dialog = this;
     this.resetRequested = false;
-    this.title_Label = new Label(this);
+   this.interfaceFinished = false;
+   this.interfaceAccepted = false;
+   this.fileOpenBusy = false;
+   this.windowCompact = false;
+   this.imageListSignature = "";
+   this.finishInterface = function( accepted )
+   {
+      if ( dialog.fileOpenBusy || dialog.interfaceFinished ) return;
+      dialog.interfaceAccepted = accepted;
+      dialog.interfaceFinished = true;
+      dialog.hide();
+   };
+   this.onClose = function()
+   {
+      if ( dialog.fileOpenBusy ) return false;
+      dialog.finishInterface( false );
+      return true;
+   };
+   this.onReturn = function( code ) { dialog.finishInterface( code != 0 ); };
+   this.workflowScroll = new ScrollBox( this );
+   this.workflowScroll.autoScroll = true;
+   this.workflowScroll.tracking = true;
+   this.workflowScroll.setScaledMinSize( 600, 180 );
+   this.scrollContent = new Control( this.workflowScroll.viewport );
+   this.fitWorkflowContent = function()
+   {
+      if ( !dialog.scrollContent.sizer || dialog._scrollLayoutBusy ) return;
+      dialog._scrollLayoutBusy = true;
+      try
+      {
+         dialog.scrollContent.setFixedWidth( Math.max( 600, dialog.workflowScroll.viewport.width ) );
+         dialog.scrollContent.setVariableHeight();
+         dialog.scrollContent.adjustToContents();
+         dialog.scrollContent.setFixedHeight( dialog.scrollContent.height );
+         TAP_updateWorkflowScroll( dialog );
+      }
+      finally { dialog._scrollLayoutBusy = false; }
+   };
+   this.workflowScroll.viewport.onResize = function() { dialog.fitWorkflowContent(); };
+   this.workflowScroll.onVerticalScrollPosUpdated = function( pos )
+   {
+      dialog.scrollContent.move( 0, -pos );
+      this.viewport.update();
+   };
+   this.scrollWorkflowWheel = function( x, y, delta )
+   {
+      if ( delta == 0 ) return;
+      dialog.workflowScroll.verticalScrollPosition = Math.max( 0, Math.min(
+         dialog.workflowScroll.maxVerticalScrollPosition,
+         dialog.workflowScroll.verticalScrollPosition + (delta > 0 ? -48 : 48) ) );
+      TAP_updateWorkflowScroll( dialog );
+   };
+   this.workflowScroll.viewport.onMouseWheel = this.scrollWorkflowWheel;
+   this.scrollContent.onMouseWheel = this.scrollWorkflowWheel;
+
+    this.title_Label = new Label(this.scrollContent);
     this.title_Label.text = "AstroTemps Full - Legacy 1.8.9";
     this.title_Label.textAlignment = TextAlign_Center;
     this.title_Label.styleSheet = "QLabel { font-size: 18pt; font-weight: bold; }";
-    this.version_Label = new Label(this);
+    this.version_Label = new Label(this.scrollContent);
     this.version_Label.text = "v" + VERSION + "  |  OSC Workflow";
     this.version_Label.textAlignment = TextAlign_Center;
     // -----------------------------------------------------------------
     // Settings
     // -----------------------------------------------------------------
-    this.target_Group = new GroupBox(this);
+    this.target_Group = new GroupBox(this.scrollContent);
     this.target_Group.title = "Settings";
     this.target_Label = new Label(this.target_Group);
     this.target_Label.text = "Image:";
@@ -18961,12 +19562,16 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
     this.customOrder_CheckBox.onCheck = function (checked) {
         dialog.order_Control.visible = checked;
         dialog.refreshOrderControls(dialog.order_Combo.currentItem);
-        dialog.adjustToContents();
+        dialog.fitWorkflowContent();
     };
     var targetRow = new HorizontalSizer;
     targetRow.spacing = 6;
     targetRow.add(this.target_Label);
     targetRow.add(this.target_ViewList, 100);
+    this.openImage_Button = new PushButton(this.target_Group);
+    this.openImage_Button.text = "Open New Image";
+    this.openImage_Button.onClick = function() { TAP_openMainImage(dialog); };
+    targetRow.add(this.openImage_Button);
     this.target_Group.sizer = new VerticalSizer;
     this.target_Group.sizer.margin = 8;
     this.target_Group.sizer.spacing = 6;
@@ -18991,7 +19596,7 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
             // Do not freeze section heights. Hidden bodies must be allowed to
             // collapse to zero naturally; fixed heights were the source of the
             // residual spacing seen after repeated expand/collapse operations.
-            dialog.setVariableHeight();
+
             for (var i = 0; i < dialog.sections.length; ++i) {
                 var sec = dialog.sections[i];
                 try {
@@ -19020,11 +19625,11 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
                 }
                 catch (e3) { }
             }
-            dialog.adjustToContents();
+            dialog.fitWorkflowContent();
             // A second event/layout pass avoids the one-frame stale geometry that
             // some Windows/PJSR controls report immediately after show/hide.
             processEvents();
-            dialog.adjustToContents();
+            dialog.fitWorkflowContent();
         }
         finally {
             dialog._layoutBusy = false;
@@ -19048,7 +19653,7 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
     // -----------------------------------------------------------------
     // 1. Optical Correction
     // -----------------------------------------------------------------
-    this.preprocess_Section = this.registerSection(new TAP_CollapsibleSection(this, "1. Optical Correction", true, initialSettings.blurCorrect));
+    this.preprocess_Section = this.registerSection(new TAP_CollapsibleSection(this.scrollContent, "1. Optical Correction", true, initialSettings.blurCorrect));
     var p1 = this.preprocess_Section.body;
     this.blurCorrect_CheckBox = new CheckBox(p1);
     this.blurCorrect_CheckBox.text = "Run Optical Correction";
@@ -19093,7 +19698,7 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
     // -----------------------------------------------------------------
     // 2. Automatic DBE / Gradient Correction
     // -----------------------------------------------------------------
-    this.adbe_Section = this.registerSection(new TAP_CollapsibleSection(this, "2. Automatic DBE", false, initialSettings.autoDBE));
+    this.adbe_Section = this.registerSection(new TAP_CollapsibleSection(this.scrollContent, "2. Automatic DBE", false, initialSettings.autoDBE));
     var p2 = this.adbe_Section.body;
     this.adbe_CheckBox = new CheckBox(p2);
     this.adbe_CheckBox.text = "Run Automatic DBE";
@@ -19150,7 +19755,7 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
     // -----------------------------------------------------------------
     // 3. SPCC
     // -----------------------------------------------------------------
-    this.spcc_Section = this.registerSection(new TAP_CollapsibleSection(this, "3. SPCC", false, initialSettings.spcc));
+    this.spcc_Section = this.registerSection(new TAP_CollapsibleSection(this.scrollContent, "3. SPCC", false, initialSettings.spcc));
     var p3 = this.spcc_Section.body;
     this.spcc_CheckBox = new CheckBox(p3);
     this.spcc_CheckBox.text = "Run SPCC";
@@ -19210,7 +19815,7 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
     // -----------------------------------------------------------------
     // 4. Sharpening
     // -----------------------------------------------------------------
-    this.blur_Section = this.registerSection(new TAP_CollapsibleSection(this, "4. Sharpening", false, initialSettings.blurSharpen));
+    this.blur_Section = this.registerSection(new TAP_CollapsibleSection(this.scrollContent, "4. Sharpening", false, initialSettings.blurSharpen));
     var p4 = this.blur_Section.body;
     this.blurSharpen_CheckBox = new CheckBox(p4);
     this.blurSharpen_CheckBox.text = "Run Sharpening";
@@ -19403,7 +20008,7 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
     // -----------------------------------------------------------------
     // 5. Noise Reduction
     // -----------------------------------------------------------------
-    this.noise_Section = this.registerSection(new TAP_CollapsibleSection(this, "5. Noise Reduction", false, initialSettings.noiseX));
+    this.noise_Section = this.registerSection(new TAP_CollapsibleSection(this.scrollContent, "5. Noise Reduction", false, initialSettings.noiseX));
     var p5 = this.noise_Section.body;
     this.noise_CheckBox = new CheckBox(p5);
     this.noise_CheckBox.text = "Run Noise Reduction";
@@ -19599,7 +20204,7 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
     // -----------------------------------------------------------------
     // 6. Star Removal
     // -----------------------------------------------------------------
-    this.star_Section = this.registerSection(new TAP_CollapsibleSection(this, "6. Star Removal", false, initialSettings.starX));
+    this.star_Section = this.registerSection(new TAP_CollapsibleSection(this.scrollContent, "6. Star Removal", false, initialSettings.starX));
     var p6 = this.star_Section.body;
     this.star_CheckBox = new CheckBox(p6);
     this.star_CheckBox.text = "Run Star Removal";
@@ -19752,7 +20357,7 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
     // -----------------------------------------------------------------
     // 7. Find and Neutralize Background
     // -----------------------------------------------------------------
-    this.findBackground_Section = this.registerSection(new TAP_CollapsibleSection(this, "7. Find and Neutralize Background", false, initialSettings.findBackground));
+    this.findBackground_Section = this.registerSection(new TAP_CollapsibleSection(this.scrollContent, "7. Find and Neutralize Background", false, initialSettings.findBackground));
     var p7 = this.findBackground_Section.body;
     this.findBackground_CheckBox = new CheckBox(p7);
     this.findBackground_CheckBox.text = "Run Find Background";
@@ -19788,7 +20393,7 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
     // -----------------------------------------------------------------
     // 8. Narrowband Normalization
     // -----------------------------------------------------------------
-    this.nbn_Section = this.registerSection(new TAP_CollapsibleSection(this, "9. Narrowband Normalization", false, initialSettings.narrowbandNormalization));
+    this.nbn_Section = this.registerSection(new TAP_CollapsibleSection(this.scrollContent, "9. Narrowband Normalization", false, initialSettings.narrowbandNormalization));
     var pNBN = this.nbn_Section.body;
     this.nbn_CheckBox = new CheckBox(pNBN);
     this.nbn_CheckBox.text = "Run Narrowband Normalization";
@@ -19812,7 +20417,7 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
     // -----------------------------------------------------------------
     // 12. Star Stretch
     // -----------------------------------------------------------------
-    this.starStretch_Section = this.registerSection(new TAP_CollapsibleSection(this, "12. Star Stretch", false, initialSettings.starStretch));
+    this.starStretch_Section = this.registerSection(new TAP_CollapsibleSection(this.scrollContent, "12. Star Stretch", false, initialSettings.starStretch));
     var p8 = this.starStretch_Section.body;
     this.starStretch_CheckBox = new CheckBox(p8);
     this.starStretch_CheckBox.text = "Run Star Stretch";
@@ -19846,7 +20451,7 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
     // -----------------------------------------------------------------
     // 9. Image Stretch
     // -----------------------------------------------------------------
-    this.statisticalStretch_Section = this.registerSection(new TAP_CollapsibleSection(this, "8. Image Stretch", false, initialSettings.statisticalStretch));
+    this.statisticalStretch_Section = this.registerSection(new TAP_CollapsibleSection(this.scrollContent, "8. Image Stretch", false, initialSettings.statisticalStretch));
     var p9 = this.statisticalStretch_Section.body;
     this.statisticalStretch_CheckBox = new CheckBox(p9);
     this.statisticalStretch_CheckBox.text = "Run Statistical Stretch";
@@ -19948,7 +20553,7 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
     // -----------------------------------------------------------------
     // 10. Lighthouse
     // -----------------------------------------------------------------
-    this.lighthouse_Section = this.registerSection(new TAP_CollapsibleSection(this, "10. Lighthouse", false, initialSettings.lighthouse));
+    this.lighthouse_Section = this.registerSection(new TAP_CollapsibleSection(this.scrollContent, "10. Lighthouse", false, initialSettings.lighthouse));
     var pLh = this.lighthouse_Section.body;
     this.lighthouse_CheckBox = new CheckBox(pLh);
     this.lighthouse_CheckBox.text = "Run Lighthouse";
@@ -19969,7 +20574,7 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
     // -----------------------------------------------------------------
     // 11. Dark Structure Enhance
     // -----------------------------------------------------------------
-    this.dse_Section = this.registerSection(new TAP_CollapsibleSection(this, "11. Dark Structure Enhance", false, initialSettings.darkStructureEnhance));
+    this.dse_Section = this.registerSection(new TAP_CollapsibleSection(this.scrollContent, "11. Dark Structure Enhance", false, initialSettings.darkStructureEnhance));
     var p10 = this.dse_Section.body;
     this.dse_CheckBox = new CheckBox(p10);
     this.dse_CheckBox.text = "Run Dark Structure Enhance";
@@ -20039,7 +20644,7 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
     // -----------------------------------------------------------------
     // 13. Blend Image + Stars
     // -----------------------------------------------------------------
-    this.screenStars_Section = this.registerSection(new TAP_CollapsibleSection(this, "13. Blend Image + Stars", false, initialSettings.screenStars));
+    this.screenStars_Section = this.registerSection(new TAP_CollapsibleSection(this.scrollContent, "13. Blend Image + Stars", false, initialSettings.screenStars));
     var p11 = this.screenStars_Section.body;
     this.screenStars_CheckBox = new CheckBox(p11);
     this.screenStars_CheckBox.text = "Run Blend Image + Stars";
@@ -20061,7 +20666,7 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
     // -----------------------------------------------------------------
     // Informations
     // -----------------------------------------------------------------
-    this.info_Group = new GroupBox(this);
+    this.info_Group = new GroupBox(this.scrollContent);
     this.info_Group.title = "Informations";
     this.info_Label = new Label(this.info_Group);
     this.info_Label.useRichText = true;
@@ -20276,7 +20881,9 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
     // -----------------------------------------------------------------
     // Stage checkboxes in accordion headers
     // -----------------------------------------------------------------
+    this.stageBindings = [];
     this.bindStageHeader = function (section, internalCheckBox, onChanged) {
+        dialog.stageBindings.push({section:section, checkBox:internalCheckBox, onChanged:onChanged});
         internalCheckBox.visible = false;
         section.enabledCheckBox.checked = internalCheckBox.checked;
         section.enabledCheckBox.onCheck = function (checked) {
@@ -20309,6 +20916,20 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
     // -----------------------------------------------------------------
     // Settings
     // -----------------------------------------------------------------
+   this.selectAllStages_Button = new PushButton( this.scrollContent );
+   this.selectAllStages_Button.text = TAP_TR_UI( "Select all stages" );
+   this.selectAllStages_Button.onClick = function() { TAP_setAllStages( dialog, true ); };
+   this.deselectAllStages_Button = new PushButton( this.scrollContent );
+   this.deselectAllStages_Button.text = TAP_TR_UI( "Deselect all stages" );
+   this.deselectAllStages_Button.onClick = function() { TAP_setAllStages( dialog, false ); };
+   var stageSelectionSizer = new HorizontalSizer;
+   stageSelectionSizer.spacing = 6;
+   stageSelectionSizer.add( this.selectAllStages_Button );
+   stageSelectionSizer.add( this.deselectAllStages_Button );
+   stageSelectionSizer.addStretch();
+
+
+
     this.getSettings = function () {
         return {
             createCopy: dialog.copy_CheckBox.checked,
@@ -20461,7 +21082,7 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
         var r = (new MessageBox("Reset all AutoProcessing controls to their defaults?", "AstroTemps AutoProcessing Tool", StdIcon_Question, StdButton_Yes, StdButton_No)).execute();
         if (r == StdButton_Yes) {
             dialog.resetRequested = true;
-            dialog.cancel();
+            dialog.finishInterface(false);
         }
     };
     this.newInstance_Button = new ToolButton(this);
@@ -20513,9 +21134,9 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
             (new MessageBox("Blend Image + Stars requires NBtoRGB_stars. Enable Star Stretch or open an existing NBtoRGB_stars image.", "AstroTemps AutoProcessing Tool", StdIcon_Error, StdButton_Ok)).execute();
             return;
         }
-        dialog.ok();
+        dialog.finishInterface(true);
     };
-    this.close_Button.onClick = function () { dialog.cancel(); };
+    this.close_Button.onClick = function () { dialog.finishInterface(false); };
     var actionSizer = new HorizontalSizer;
     actionSizer.spacing = 8;
     actionSizer.add(this.newInstance_Button);
@@ -20528,36 +21149,89 @@ function AstroTempsAutoProcessingDialog_init(initialSettings) {
     // -----------------------------------------------------------------
     // Main layout
     // -----------------------------------------------------------------
-    this.sizer = new VerticalSizer;
-    this.sizer.margin = 10;
-    this.sizer.spacing = 3;
-    this.sizer.add(this.title_Label);
-    this.sizer.add(this.version_Label);
-    this.sizer.addSpacing(3);
-    this.sizer.add(this.target_Group);
-    this.sizer.add(this.preprocess_Section.control);
-    this.sizer.add(this.adbe_Section.control);
-    this.sizer.add(this.spcc_Section.control);
-    this.sizer.add(this.blur_Section.control);
-    this.sizer.add(this.noise_Section.control);
-    this.sizer.add(this.star_Section.control);
-    this.sizer.add(this.findBackground_Section.control);
-    this.sizer.add(this.statisticalStretch_Section.control);
-    this.sizer.add(this.nbn_Section.control);
-    this.sizer.add(this.lighthouse_Section.control);
-    this.sizer.add(this.dse_Section.control);
-    this.sizer.add(this.starStretch_Section.control);
-    this.sizer.add(this.screenStars_Section.control);
-    this.sizer.add(this.info_Group);
-    this.sizer.addSpacing(4);
-    this.sizer.add(actionSizer);
+    this.scrollContent.sizer = new VerticalSizer;
+    this.scrollContent.sizer.margin = 10;
+    this.scrollContent.sizer.spacing = 3;
+    this.scrollContent.sizer.add(this.title_Label);
+    this.scrollContent.sizer.add(this.version_Label);
+    this.scrollContent.sizer.addSpacing(3);
+    this.scrollContent.sizer.add(this.target_Group);
+    this.scrollContent.sizer.add(stageSelectionSizer);
+    this.scrollContent.sizer.add(this.preprocess_Section.control);
+    this.scrollContent.sizer.add(this.adbe_Section.control);
+    this.scrollContent.sizer.add(this.spcc_Section.control);
+    this.scrollContent.sizer.add(this.blur_Section.control);
+    this.scrollContent.sizer.add(this.noise_Section.control);
+    this.scrollContent.sizer.add(this.star_Section.control);
+    this.scrollContent.sizer.add(this.findBackground_Section.control);
+    this.scrollContent.sizer.add(this.statisticalStretch_Section.control);
+    this.scrollContent.sizer.add(this.nbn_Section.control);
+    this.scrollContent.sizer.add(this.lighthouse_Section.control);
+    this.scrollContent.sizer.add(this.dse_Section.control);
+    this.scrollContent.sizer.add(this.starStretch_Section.control);
+    this.scrollContent.sizer.add(this.screenStars_Section.control);
+    this.scrollContent.sizer.add(this.info_Group);
+    this.scrollContent.sizer.addSpacing(4);
+
+   this.minimize_Button = new ToolButton( this );
+   this.minimize_Button.icon = this.scaledResource( ":/browser/collapse.png" );
+   this.minimize_Button.setScaledFixedSize( 20, 20 );
+   this.minimize_Button.toolTip = TAP_TR_UI( "Minimize to compact bar" );
+   this.minimize_Button.onClick = function() { TAP_setMainCompact( dialog, true ); };
+   this.restore_Button = new ToolButton( this );
+   this.restore_Button.icon = this.scaledResource( ":/browser/expand.png" );
+   this.restore_Button.setScaledFixedSize( 20, 20 );
+   this.restore_Button.toolTip = TAP_TR_UI( "Restore window" );
+   this.restore_Button.enabled = false;
+   this.restore_Button.onClick = function() { TAP_setMainCompact( dialog, false ); };
+   this.windowControlsSizer = new HorizontalSizer;
+   this.windowControlsSizer.spacing = 2;
+   this.windowControlsSizer.margin = 0;
+   this.windowControlsSizer.addStretch();
+   this.windowControlsSizer.add( this.minimize_Button );
+   this.windowControlsSizer.add( this.restore_Button );
+   this.sizer = new VerticalSizer;
+   this.sizer.margin = 10;
+   this.sizer.spacing = 2;
+   this.sizer.add( this.windowControlsSizer );
+   this.sizer.add( this.workflowScroll, 100 );
+   this.sizer.add( actionSizer );
+
     this.windowTitle = "AstroTemps Full - Legacy 1.8.9";
     this.setMinWidth(640);
-    this.updateEnabledState();
-    this.compactReflow();
-    this.onShow = function () {
-        dialog.compactReflow();
-    };
+   this.adjustToContents();
+   // Leave initial placement to PixInsight. Before execute()/show(), the
+   // dialog's screen may still be the primary monitor rather than its host's.
+   this.resize( Math.max( 660, this.width ), 600 );
+   this.updateEnabledState();
+   this.compactReflow();
+   this.initialScreenFitDone = false;
+   this.initialScreenFitTimer = null;
+
+   this.onShow = function()
+   {
+      dialog.compactReflow();
+      if ( dialog.initialScreenFitDone || dialog.initialScreenFitTimer != null ) return;
+      dialog.initialScreenFitTimer = new Timer;
+      dialog.initialScreenFitTimer.interval = 0.05;
+      dialog.initialScreenFitTimer.singleShot = true;
+      dialog.initialScreenFitTimer.onTimeout = function()
+      {
+         dialog.initialScreenFitTimer = null;
+         dialog.initialScreenFitDone = true;
+         if ( !dialog.windowCompact ) TAP_fitShownWorkflowToScreen( dialog );
+         dialog.compactReflow();
+      };
+      dialog.initialScreenFitTimer.start();
+   };
+   this.onHide = function()
+   {
+      if ( dialog.initialScreenFitTimer != null )
+      {
+         dialog.initialScreenFitTimer.stop();
+         dialog.initialScreenFitTimer = null;
+      }
+   };
 }
 function AstroTempsAutoProcessingDialog(initialSettings) {
     this.__base__ = Dialog;
@@ -20611,7 +21285,7 @@ function main() {
     var currentSettings = initialSettings;
     for (;;) {
         var dialog = new AstroTempsAutoProcessingDialog(currentSettings);
-        var accepted = dialog.execute();
+        var accepted = TAP_executeMainModeless(dialog);
         if (dialog.resetRequested) {
             currentSettings = defaultSettings();
             continue;

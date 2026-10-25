@@ -1,0 +1,20 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const s=fs.readFileSync(require('node:path').join(__dirname,'../AstroTemps_Full_Legacy_1.8.9.js'),'utf8');
+function only(n){const a=s.indexOf('function '+n+'(');return s.slice(a,s.indexOf('\n}',a)+2);}
+const a=s.indexOf('function TAP_updateWorkflowScroll(');assert(a>=0,'Full requires scrollable content');
+const b=s.indexOf('function AstroTempsAutoProcessingDialog_init(',a);
+const ctx={Math};vm.createContext(ctx);vm.runInContext(['TAP_updateWorkflowScroll'].map(only).join("\n"),ctx);
+let moved;
+const d={workflowScroll:{viewport:{height:500,update(){}},verticalScrollPosition:900},scrollContent:{height:1200,move(x,y){moved=y;}}};
+ctx.TAP_updateWorkflowScroll(d);assert.equal(d.workflowScroll.maxVerticalScrollPosition,700);assert.equal(moved,-700);
+d.scrollContent.height=300;ctx.TAP_updateWorkflowScroll(d);assert.equal(d.workflowScroll.verticalScrollPosition,0);assert.equal(Math.abs(moved),0);
+d.scrollContent.height=1000;d.workflowScroll.viewport.height=800;ctx.TAP_updateWorkflowScroll(d);assert.equal(d.workflowScroll.maxVerticalScrollPosition,200);
+console.log('PASS - workflow scrolling clamps after resize and accordion collapse');
+const wheelStart=s.indexOf('   this.scrollWorkflowWheel = function(');
+const wheelEnd=s.indexOf('   this.workflowScroll.viewport.onMouseWheel',wheelStart);
+const wheelContext={dialog:d,TAP_updateWorkflowScroll:ctx.TAP_updateWorkflowScroll,Math};
+vm.createContext(wheelContext);vm.runInContext(s.slice(wheelStart,wheelEnd),wheelContext);
+d.workflowScroll.verticalScrollPosition=100;
+wheelContext.scrollWorkflowWheel(0,0,120);assert.equal(d.workflowScroll.verticalScrollPosition,52,'Wheel up scrolls toward top');
+wheelContext.scrollWorkflowWheel(0,0,-120);assert.equal(d.workflowScroll.verticalScrollPosition,100,'Wheel down scrolls toward bottom');
+console.log('PASS - wheel direction');

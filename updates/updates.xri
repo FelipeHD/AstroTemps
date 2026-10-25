@@ -2,9 +2,9 @@
 <xri version="1.0">
   <description><p>AstroTemps Full Legacy 1.8.9 (Windows). Independent Full-only update channel.</p></description>
   <platform os="all" arch="noarch" version="1.8.9:1.8.9-2">
-    <package fileName="AstroTemps-Full-Legacy-1.8.9-v1.0.0.zip" sha1="241fe43192b52fd623a32388797b6f3faee498a1" type="script" releaseDate="20260922">
-      <title>AstroTemps Full Legacy 1.8.9 v1.0.0 (Windows)</title>
-      <description><p>Full Legacy standalone configurable workflow. ColorSaturation numeric enum guard, StarXTerminator / StarNet2 fallback and star-output checks. Offline checks only; PixInsight 1.8.9 execution unverified. Windows build with third-party dependencies.</p></description>
+    <package fileName="AstroTemps-Full-Legacy-1.8.9-v1.3.6.zip" sha1="83d240ff05ad9528eb125531d4eba0f2fa46d43f" type="script" releaseDate="20261025">
+      <title>AstroTemps Full Legacy 1.8.9 v1.3.6 (Windows)</title>
+      <description><p>Full Legacy v1.3.6: integrated NBN/StarStretch zoom previews, stage selection, scrollable interface, Open New Image and compact controls. Legacy processing compatibility retained; native runtime unverified.</p></description>
     </package>
   </platform>
 </xri>
