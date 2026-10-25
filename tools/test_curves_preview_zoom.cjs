@@ -1,0 +1,36 @@
+const fs = require('node:fs');
+const vm = require('node:vm');
+const assert = require('node:assert/strict');
+const source = fs.readFileSync(require('node:path').join(__dirname, '../AstroTemps_AutoProcessing_Tool.js'), 'utf8');
+const start = source.indexOf('function TAPMC_PreviewControl_init( parent )');
+const end = source.indexOf('var TAPMC_PreviewControl =', start);
+const ctx = {Point: function(x,y){this.x=x;this.y=y;}, Cursor:function(){}, StdCursor_OpenHand:1, StdCursor_ClosedHand:2, MouseButton_Left:1, BitmapInterpolation_Bilinear:1, BitmapInterpolation_NearestNeighbor:2, Math};
+vm.createContext(ctx); vm.runInContext(source.slice(start,end),ctx);
+const p = {viewport:{width:400,height:300,update(){}},horizontalScrollPosition:0,verticalScrollPosition:0,
+setHorizontalScrollRange(a,b){this.maxHorizontalScrollPosition=b;},setVerticalScrollRange(a,b){this.maxVerticalScrollPosition=b;}};
+p.viewport.parent=p; ctx.TAPMC_PreviewControl_init.call(p);
+const bitmap = (w,h)=>({width:w,height:h,clear(){},scaled(x,y){return bitmap(Math.round(w*x),Math.round(h*y));}});
+const img = ()=>({width:1000,height:800,free(){},render(){return bitmap(1000,800);}});
+p.setImage(img());
+assert.equal(typeof p.updateZoom,'function','Preview must support zoom');
+p.updateZoom(2, {x:100,y:80});
+assert.equal(p.horizontalScrollPosition,100); assert.equal(p.verticalScrollPosition,80);
+p.viewport.onMouseWheel(100,80,-120,0,0); // PJSR: negative delta zooms in, as in existing main preview.
+assert(p.zoom>2); const zoom=p.zoom;
+p.viewport.onMouseWheel(100,80,0,0,0); assert.equal(p.zoom,zoom);
+p.updateZoom(2, {x:100,y:80});
+p.viewport.onMousePress(100,80,1); p.viewport.onMouseMove(80,60);
+assert.equal(p.horizontalScrollPosition,120); assert.equal(p.verticalScrollPosition,100);
+p.viewport.onMouseRelease(); assert.equal(p.dragging,false);
+p.clear(true); p.setImage(img());
+assert.equal(p.zoom,2); assert.equal(p.horizontalScrollPosition,120);
+p.viewport.onMousePress(0,0,1);p.viewport.onMouseMove(99999,99999);
+assert.equal(p.horizontalScrollPosition,0); assert.equal(p.verticalScrollPosition,0);
+p.viewport.onMouseRelease();
+p.updateZoom(999);assert.equal(p.zoom,4);
+p.updateZoom(0.001);assert.equal(p.zoom,0.125);
+assert.equal(p.maxHorizontalScrollPosition,0);
+p.viewport.width=100;p.viewport.height=100;p.viewport.onResize();assert.equal(p.maxHorizontalScrollPosition,25);
+p.clear();assert.equal(p.zoom,1);assert.equal(p.horizontalScrollPosition,0);
+p.viewport.onMouseWheel(10,10,-120,0,0);assert.equal(p.zoom,1);
+console.log('PASS - Curves zoom anchor, wheel, pan, limits, resize, refresh and cleanup');

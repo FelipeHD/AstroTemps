@@ -26,7 +26,7 @@ Install the AstroTemps package and restart PixInsight if requested.
 
 - `AstroTemps_AutoProcessing_Tool.js` — stable release source used to build the PixInsight package.
 - `updates/updates.xri` — PixInsight update-repository manifest generated from the stable source.
-- `updates/AstroTemps-v1.2.0.zip` — installable PixInsight package generated from the stable source.
+- `updates/AstroTemps-v1.3.6.zip` — installable PixInsight package generated from the stable source.
 - `tools/build_update.py` — reproducible package/manifest builder.
 - `.github/workflows/build-pixinsight-update.yml` — automated release package builder.
 
