@@ -1,0 +1,22 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const s=fs.readFileSync(require('node:path').join(__dirname,'../AstroTemps_Full_Legacy_1.9.3.js'),'utf8');
+function only(n){const a=s.indexOf('function '+n+'(');return s.slice(a,s.indexOf('\n}',a)+2);}
+const a=s.indexOf('function TAP_setAllStages( dialog, checked )');
+assert(a>=0,'Full must provide bulk stage selection');
+const b=s.indexOf('function AstroTempsAutoProcessingDialog_init(',a);
+const context={};vm.createContext(context);vm.runInContext(['TAP_setAllStages'].map(only).join("\n"),context);
+const names=[...s.matchAll(/this\.bindStageHeader\(\s*this\.(\w+),\s*this\.(\w+)/g)];
+assert.equal(names.length,13);
+let updates=0;const dialog={stageBindings:names.map(n=>({section:{enabledCheckBox:{checked:false}},checkBox:{checked:false}})), updateEnabledState(){updates++;}, parameter:0.35,order:['star','stretch']};
+let dependency=false;
+dialog.stageBindings[11].onChanged=checked=>{if(checked&&dialog.stageBindings[5].checkBox.checked)dependency=true;};
+context.TAP_setAllStages(dialog,true);
+assert(dialog.stageBindings.every(b=>b.checkBox.checked&&b.section.enabledCheckBox.checked));
+assert(dependency);assert.equal(updates,1);assert.equal(dialog.parameter,0.35);assert.deepEqual(dialog.order,['star','stretch']);
+context.TAP_setAllStages(dialog,false);
+assert(dialog.stageBindings.every(b=>!b.checkBox.checked&&!b.section.enabledCheckBox.checked));
+assert.equal(updates,2);
+dialog.stageBindings[0].checkBox.checked=true;
+context.TAP_setAllStages(dialog,true);
+assert(dialog.stageBindings.every(b=>b.checkBox.checked&&b.section.enabledCheckBox.checked));
+console.log('PASS - 13 stages, headers, mixed selection, dependencies and unchanged settings');
